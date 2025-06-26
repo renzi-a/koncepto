@@ -20,9 +20,11 @@ Route::post('/login', [LoginController::class, 'store'])->name('login.store');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // Admin Routes
+// Admin Routes
 Route::middleware(['auth', IsAdmin::class])->group(function () {
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.dashboard');
 
+    // Product Management
     Route::prefix('admin/product')->name('product.')->group(function () {
         Route::get('/', [ProductController::class, 'index'])->name('index');
         Route::get('/create', [ProductController::class, 'create'])->name('create');
@@ -31,24 +33,34 @@ Route::middleware(['auth', IsAdmin::class])->group(function () {
         Route::put('/{product}', [ProductController::class, 'update'])->name('update');
         Route::delete('/{product}', [ProductController::class, 'destroy'])->name('destroy');
     });
+
+    // School Management
+    Route::prefix('admin/schools')->name('admin.schools.')->group(function () {
+        Route::get('/', [SchoolController::class, 'index'])->name('index');
+        Route::get('/create', [SchoolController::class, 'create'])->name('create');
+        Route::post('/', [SchoolController::class, 'store'])->name('store');
+        Route::get('/{school}', [SchoolController::class, 'show'])->name('show');
+        Route::get('/{school}/edit', [SchoolController::class, 'edit'])->name('edit');
+        Route::put('/{school}', [SchoolController::class, 'update'])->name('update');
+        Route::delete('/{school}', [SchoolController::class, 'destroy'])->name('destroy');
+    });
+
+    // User Management per School
+    Route::prefix('admin/users')->name('admin.users.')->group(function () {
+        Route::get('/{school}', [UserManagementController::class, 'index'])->name('index');
+        Route::get('/schools/user/create/{school}', [UserManagementController::class, 'create'])->name('create');
+        Route::post('/{school}', [UserManagementController::class, 'store'])->name('store'); // ✅ Add this line
+        Route::get('/edit/{user}', [UserManagementController::class, 'edit'])->name('edit');
+        Route::put('/{user}', [UserManagementController::class, 'update'])->name('update');
+        Route::delete('/{user}', [UserManagementController::class, 'destroy'])->name('destroy');
+    });
 });
 
-// Route::get('/admin/schools', [SchoolController::class, 'index'])->name('admin.schools.index');
-
-//         Route::get('/', [SchoolController::class, 'index'])->name('index');
-//         // Route::get('/{school}', [SchoolController::class, 'show'])->name('show');
-//         // Route::get('/{school}/contract/create', [SchoolController::class, 'createContract'])->name('contract.create');
-//         // Route::post('/{school}/contract', [SchoolController::class, 'storeContract'])->name('contract.store');
 
 
-//     // Route::prefix('admin/users')->name('admin.users.')->group(function () {
-//     //     Route::get('/{school}', [UserManagementController::class, 'index'])->name('index');
-//     //     Route::get('/edit/{user}', [UserManagementController::class, 'edit'])->name('edit');
-//     //     Route::put('/{user}', [UserManagementController::class, 'update'])->name('update');
-//     //     Route::delete('/{user}', [UserManagementController::class, 'destroy'])->name('destroy');
-//     // });
 
-// User Routes
-// Route::middleware(['auth', IsUser::class])->group(function () {
-//     Route::get('/user/home2', [UserController::class, 'index'])->name('user.home');
-// });
+Route::middleware(['auth', IsUser::class])->group(function () {
+    Route::get('/user/home2', [UserController::class, 'index'])->name('user.home');
+});
+
+

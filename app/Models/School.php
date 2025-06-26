@@ -3,13 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Models\Orders;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class School extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'user_id',
         'school_name',
@@ -18,13 +15,20 @@ class School extends Model
         'image',
     ];
 
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Orders::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
     public function users()
     {
         return $this->hasMany(User::class);
     }
 
-    public function orders()
-{
-    return $this->hasMany(Orders::class);
 }
-}
+

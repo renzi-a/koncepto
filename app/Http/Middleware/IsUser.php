@@ -12,7 +12,7 @@ class IsUser
     {
         $user = Auth::user();
 
-        if ($user && $user->role === 'user') {
+        if ($user && $user->role === 'school_admin') {
             return $next($request);
         }
 

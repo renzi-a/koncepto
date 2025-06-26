@@ -34,9 +34,16 @@ return new class extends Migration
         });
     }
 
+
     public function down(): void
     {
         Schema::dropIfExists('order_detail');
         Schema::dropIfExists('orders');
+
+        Schema::table('orders', function (Blueprint $table) {
+            $table->dropForeign(['school_id']);
+            $table->dropColumn('school_id');
+        });
+        
     }
 };

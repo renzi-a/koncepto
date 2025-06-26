@@ -20,6 +20,7 @@ class AdminUserSeeder extends Seeder
             'last_name' => 'Angeles',
             'email' => 'reenaopheliaangeles5@gmail.com',
             'role' => 'admin',
+            'cp_no' => '0935-688-5819',
             'password' => bcrypt('konceptoadmin'),
         ]);
 
@@ -27,7 +28,8 @@ class AdminUserSeeder extends Seeder
             'first_name' => 'Marc Renzi',
             'last_name' => 'Angeles',
             'email' => 'iznerangeles@gmail.com',
-            'role' => 'user',
+            'role' => 'school_admin',
+            'cp_no' => '0921-270-4695',
             'password' => bcrypt('user123'),
         ]);
     }

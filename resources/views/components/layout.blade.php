@@ -91,13 +91,12 @@
                 Orders
             </x-side-link>
 
-            <x-side-link href="#" :active="request()->is('orders')">
+            <x-side-link href="{{ route('admin.schools.index') }}" :active="request()->routeIs('admin.schools.*')">
                 <svg class="w-6 h-6 inline-block mr-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M12 2L2 7l10 5 10-5-10-5zm0 6.75L6.16 7 12 4.25 17.84 7 12 8.75zm0 2.75l-10-5v11l10 5 10-5v-11l-10 5z" />
                 </svg>
                 Schools
             </x-side-link>
-
 
             <x-side-link href="#" :active="request()->is('messages')">
                 <svg class="w-6 h-6 inline-block mr-3" fill="currentColor" viewBox="0 0 24 24">

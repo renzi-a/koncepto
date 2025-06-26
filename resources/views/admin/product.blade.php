@@ -54,15 +54,22 @@
                         <td class="px-4 py-2">₱{{ number_format($product->price, 2) }}</td>
                         <td class="px-4 py-2">{{ $product->unit }}</td>
                         <td class="px-4 py-2">{{ $product->quantity }}</td>
-                        <td class="px-4 py-2 space-x-2">
-                            <a href="{{ route('product.edit', $product) }}" 
-                               class="text-blue-600 hover:underline">Edit</a>
-                            <form action="{{ route('product.destroy', $product) }}" method="POST" class="inline-block" onsubmit="return confirm('Delete this product?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="text-red-600 hover:underline">Delete</button>
-                            </form>
+                        <td class="px-4 py-2">
+                            <div class="flex items-center justify-center space-x-3">
+                                <a href="{{ route('product.edit', $product) }}" class="hover:scale-105 transition-transform">
+                                    <img src="{{ asset('images/icons/edit.png') }}" alt="Edit" class="w-5 h-5">
+                                </a>
+                                <form action="{{ route('product.destroy', $product) }}" method="POST"
+                                    onsubmit="return confirm('Delete this product?');" class="inline-block">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="hover:scale-105 transition-transform">
+                                        <img src="{{ asset('images/icons/delete.png') }}" alt="Delete" class="w-5 h-5">
+                                    </button>
+                                </form>
+                            </div>
                         </td>
+
                     </tr>
                 @empty
                     <tr>

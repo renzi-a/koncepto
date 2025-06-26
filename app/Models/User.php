@@ -10,13 +10,17 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
+// app/Models/User.php
     protected $fillable = [
         'first_name',
         'last_name',
         'email',
-        'password',
+        'cp_no',
         'role',
+        'password',
+        'school_id',
     ];
+
 
     protected $hidden = [
         'password',
