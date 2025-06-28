@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Orders;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\Products;
@@ -13,14 +14,12 @@ class AdminController extends Controller
 {
     public function index(Request $request)
     {
-        // Base queries
         $pendingOrdersQuery = Orders::where('status', 'pending');
         $completedOrdersQuery = Orders::where('status', 'completed');
         $orderDetailQuery = DB::table('order_detail')
             ->join('orders', 'order_detail.order_id', '=', 'orders.id')
             ->where('orders.status', 'completed');
 
-        // Filter by year and quarter
         if ($request->filled('year')) {
             $year = $request->year;
 
@@ -32,29 +31,23 @@ class AdminController extends Controller
                 $startDate = Carbon::create($year, $startMonth, 1)->startOfDay();
                 $endDate = Carbon::create($year, $endMonth, 1)->endOfMonth()->endOfDay();
 
-                // Apply filter to orders queries
                 $pendingOrdersQuery->whereBetween('created_at', [$startDate, $endDate]);
                 $completedOrdersQuery->whereBetween('created_at', [$startDate, $endDate]);
 
-                // Apply filter to order detail join query (for revenue & sales)
                 $orderDetailQuery->whereBetween('orders.created_at', [$startDate, $endDate]);
             } else {
-                // Filter only by year if no quarter selected
                 $pendingOrdersQuery->whereYear('created_at', $year);
                 $completedOrdersQuery->whereYear('created_at', $year);
                 $orderDetailQuery->whereYear('orders.created_at', $year);
             }
         }
 
-        // Counts
         $pendingOrders = $pendingOrdersQuery->count();
         $completedOrders = $completedOrdersQuery->count();
 
-        // Total revenue
         $totalRevenue = $orderDetailQuery
             ->sum(DB::raw('order_detail.price * order_detail.quantity'));
 
-        // Sales trend data
         $sales = DB::table('order_detail')
             ->join('orders', 'order_detail.order_id', '=', 'orders.id')
             ->where('orders.status', 'completed');
@@ -76,7 +69,6 @@ class AdminController extends Controller
         $salesTrendLabels = $sales->pluck('date')->toArray();
         $salesTrendData = $sales->pluck('total')->toArray();
 
-        // Top products
         $topProductsQuery = DB::table('order_detail')
             ->join('products', 'order_detail.product_id', '=', 'products.id')
             ->join('orders', 'order_detail.order_id', '=', 'orders.id')
@@ -116,13 +108,20 @@ class AdminController extends Controller
         return view('admin.orders');
     }
 
-    public function users()
+    public function chat($userId = null)
     {
-        return view('admin.users');
-    }
+        $users = User::where('role', 'school_admin')->with('school')->get();
 
-    public function chat()
-    {
-        return view('admin.admin_chat');
+        $activeUser = null;
+        $messages = collect();
+
+        if ($userId) {
+            $activeUser = $users->firstWhere('id', $userId);
+            $messages = $activeUser
+                ? $activeUser->messages()->with('sender')->latest()->get()->reverse()
+                : collect();
+        }
+
+        return view('admin.admin_chat', compact('users', 'activeUser', 'messages'));
     }
 }

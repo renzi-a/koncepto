@@ -28,6 +28,7 @@
                     
             </style>
         @endif
+        @stack('scripts')
     </head>
     <!-- component -->
 <body class="font-poppins antialiased bg-[#F0F4F9]">
@@ -98,7 +99,7 @@
                 Schools
             </x-side-link>
 
-            <x-side-link href="#" :active="request()->is('messages')">
+            <x-side-link href="{{ route('admin.chat.index') }}" :active="request()->is('admin/chat*')">
                 <svg class="w-6 h-6 inline-block mr-3" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M4 4h16v12H5.17L4 17.17V4zm2 2v6h12V6H6z" />
                 </svg>

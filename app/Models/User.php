@@ -31,13 +31,24 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    public function schools()
+    public function school()
     {
-        return $this->hasMany(School::class);
+        return $this->belongsTo(School::class);
     }
+
 
     public function orders()
     {
         return $this->hasMany(Orders::class);
+    }
+
+    public function sentMessages()
+    {
+        return $this->hasMany(Message::class, 'sender_id');
+    }
+
+    public function receivedMessages()
+    {
+        return $this->hasMany(Message::class, 'receiver_id');
     }
 }

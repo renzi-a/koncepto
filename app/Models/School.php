@@ -15,19 +15,32 @@ class School extends Model
         'image',
     ];
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
     public function orders(): HasMany
     {
         return $this->hasMany(Orders::class);
     }
-
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
-
     public function users()
     {
-        return $this->hasMany(User::class);
+        return $this->hasMany(User::class, 'school_id');
+    }
+
+        public function school_admin()
+    {
+        return $this->hasOne(User::class, 'school_id')->where('role', 'school_admin');
+    }
+
+    public function teachers()
+    {
+        return $this->hasMany(User::class, 'school_id')->where('role', 'teacher');
+    }
+
+    public function students()
+    {
+        return $this->hasMany(User::class, 'school_id')->where('role', 'student');
     }
 
 }

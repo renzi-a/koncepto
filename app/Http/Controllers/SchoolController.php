@@ -11,15 +11,25 @@ class SchoolController extends Controller
 {
     public function index()
     {
-        $schools = School::all()->map(function ($school) {
-            $school->orders_count = method_exists($school, 'orders') ? $school->orders()->count() : 0;
-            $school->users_count = method_exists($school, 'users') ? $school->users()->count() : 0;
+        $schools = School::with('users')->get()->map(function ($school) {
+            $school->orders_count = $school->orders()->count();
+            
+            $school->users_count = $school->users()->count();
+            $school->admin_count = $school->users()->where('role', 'school_admin')->count();
+            $school->teacher_count = $school->users()->where('role', 'teacher')->count();
+            $school->student_count = $school->users()->where('role', 'student')->count();
+
             return $school;
         });
 
         return view('admin.schools.index', compact('schools'));
     }
 
+
+    public function create()
+    {
+        return view('admin.schools.create');
+    }
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -36,6 +46,7 @@ class SchoolController extends Controller
             'admin_password' => 'required|string|min:8|confirmed',
         ]);
 
+        // Create the user first
         $user = User::create([
             'first_name' => $validated['admin_first_name'],
             'last_name' => $validated['admin_last_name'],
@@ -45,21 +56,28 @@ class SchoolController extends Controller
             'password' => Hash::make($validated['admin_password']),
         ]);
 
+        // Upload logo if present
         $logoPath = null;
         if ($request->hasFile('logo')) {
             $logoPath = $request->file('logo')->store('logos', 'public');
         }
 
+        // Create the school
         $school = School::create([
             'school_name' => $validated['school_name'],
             'address' => $validated['address'],
             'school_email' => $validated['school_email'],
             'image' => $logoPath,
-            'user_id' => $user->id,
+            'user_id' => $user->id, // Store reference to admin
         ]);
+
+        // 🔧 Fix: Now set the school_id on the user
+        $user->school_id = $school->id;
+        $user->save();
 
         return redirect()->route('admin.schools.show', $school)->with('success', 'School and Admin created.');
     }
+
         public function show(School $school)
         {
             $school->load(['user', 'orders', 'users']);
@@ -67,11 +85,12 @@ class SchoolController extends Controller
         }
 
 
-        public function edit(School $school)
-        {
-            $admin = $school->school_admin;
-            return view('admin.schools.edit', compact('school', 'admin'));
-        }
+    public function edit(School $school)
+    {
+        $admin = $school->users()->where('role', 'school_admin')->first();
+        return view('admin.schools.edit', compact('school', 'admin'));
+    }
+
 
     public function update(Request $request, School $school)
     {

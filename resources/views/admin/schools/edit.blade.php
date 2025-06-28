@@ -1,6 +1,16 @@
 <x-layout />
 <div class="container mx-auto px-4 py-6">
-    <h1 class="text-2xl font-bold mb-6">Edit School & Administrator</h1>
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">Edit School & Administrator</h1>
+        <a href="{{ route('admin.schools.index') }}"
+           class="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-full transition shadow-sm">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2"
+                 viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Back to Schools
+        </a>
+    </div>
 
     @if ($errors->any())
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
@@ -13,7 +23,7 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.schools.update', $school->id) }}" method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded shadow-md space-y-6">
+    <form id="schoolForm" action="{{ route('admin.schools.update', $school->id) }}" method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded shadow-md space-y-6">
         @csrf
         @method('PUT')
 
@@ -23,19 +33,22 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label for="school_name" class="block font-semibold mb-1">School Name</label>
-                    <input type="text" name="school_name" id="school_name" value="{{ old('school_name', $school->school_name) }}"
+                    <input type="text" name="school_name" id="school_name"
+                           value="{{ old('school_name', $school->school_name) }}"
                            required class="w-full border border-gray-300 px-3 py-2 rounded">
                 </div>
 
                 <div>
                     <label for="address" class="block font-semibold mb-1">School Address</label>
-                    <input type="text" name="address" id="address" value="{{ old('address', $school->address) }}"
+                    <input type="text" name="address" id="address"
+                           value="{{ old('address', $school->address) }}"
                            required class="w-full border border-gray-300 px-3 py-2 rounded">
                 </div>
 
                 <div>
                     <label for="school_email" class="block font-semibold mb-1">School Email</label>
-                    <input type="email" name="school_email" id="school_email" value="{{ old('school_email', $school->school_email) }}"
+                    <input type="email" name="school_email" id="school_email"
+                           value="{{ old('school_email', $school->school_email) }}"
                            required class="w-full border border-gray-300 px-3 py-2 rounded">
                 </div>
 
@@ -84,8 +97,7 @@
 
                 <div>
                     <label for="admin_role" class="block font-semibold mb-1">Role</label>
-                    <select name="admin_role" id="admin_role" required
-                            class="w-full border border-gray-300 px-3 py-2 rounded">
+                    <select name="admin_role" id="admin_role" required class="w-full border border-gray-300 px-3 py-2 rounded">
                         <option value="school_admin" selected>School Admin</option>
                     </select>
                 </div>
@@ -113,3 +125,28 @@
         </div>
     </form>
 </div>
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const form = document.getElementById('schoolForm');
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            Swal.fire({
+                title: "Are you sure?",
+                text: "Please confirm to save the school and admin.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#16a34a",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, save it!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+</script>
+@endpush
