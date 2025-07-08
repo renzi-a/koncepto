@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\ChatController;
+use App\Http\Controllers\AdminChatController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserManagementController;
@@ -25,9 +25,11 @@ Route::middleware(['auth', IsAdmin::class])->group(function () {
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.dashboard');
     
     // Chat
-    Route::get('/admin/chat', [ChatController::class, 'chat'])->name('admin.chat.index');
-    Route::get('/admin/chat/{userId}', [ChatController::class, 'chat'])->name('admin.chat.show');
-    Route::post('/admin/chat/{userId}', [ChatController::class, 'send'])->name('admin.chat.send');
+    Route::prefix('admin/chat')->middleware(['auth'])->group(function () {
+        Route::get('/admin/chat', [AdminChatController::class, 'index'])->name('admin.chat.index');
+        Route::get('/admin/chat/{user}', [AdminChatController::class, 'show'])->name('admin.chat.show');
+        Route::post('/admin/chat/{user}', [AdminChatController::class, 'send'])->name('admin.chat.send');
+    });
 
     // Product Management
     Route::prefix('admin/product')->name('product.')->group(function () {
