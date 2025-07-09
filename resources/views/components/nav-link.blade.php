@@ -4,12 +4,16 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>Koncepto</title>
+        <title>Laravel</title>
 
+        <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
          <script src="https://cdn.tailwindcss.com"></script>
+        <!-- Styles / Scripts -->
         @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
             @vite(['resources/css/app.css', 'resources/js/app.js'])
         @else
@@ -27,94 +31,62 @@
 
     
 <body class="h-full bg-[#F0F4F9]">
-    <header class="flex items-center border-b border-gray-300 py-3 px-4 sm:px-10 bg-[#56AB2F] min-h-[65px] tracking-wide relative z-50">
-        <div class="flex items-center justify-between w-full max-w-screen-xl mx-auto gap-4">
-            
-            <a href="#" class="flex-shrink-0">
-                <img src="{{ asset('images/logo2.png')}}" alt="logo" class="w-[134px]" />
-            </a>
+<header class="flex items-center border-b border-gray-300 py-3 px-4 sm:px-10 bg-[#56AB2F] min-h-[65px] tracking-wide relative z-50">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-            <div class="flex-grow max-w-2xl w-full mx-4">
-                <form method="GET" action="{{ route('home') }}" id="searchForm">
-                    <div class="flex items-center bg-gray-100 px-4 py-2.5 border border-gray-200 focus-within:border-slate-900 transition-all rounded-xl">
-                        <input type="text"
-                               name="search"
-                               value="{{ request('search') }}"
-                               placeholder="Search something..."
-                               class="w-full text-sm outline-none bg-transparent pr-2"
-                               id="searchInput"
-                               autocomplete="off" />
-                        <button type="submit" hidden></button>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192.904 192.904" width="16px" class="cursor-pointer fill-gray-400">
-                            <path d="m190.707 180.101-47.078-47.077c11.702-14.072 18.752-32.142 18.752-51.831C162.381 36.423 125.959 0 81.191 0 36.422 0 0 36.423 0 81.193c0 44.767 36.422 81.187 81.191 81.187 19.688 0 37.759-7.049 51.831-18.751l47.079 47.078a7.474 7.474 0 0 0 5.303 2.197 7.498 7.498 0 0 0 5.303-12.803zM15 81.193C15 44.694 44.693 15 81.191 15c36.497 0 66.189 29.694 66.189 66.193 0 36.496-29.692 66.187-66.189 66.187C44.693 147.38 15 117.689 15 81.193z"></path>
-                        </svg>
-                    </div>
-                </form>
-            </div>
-                <a href="/login" class="flex justify-center text-lg px-5 py-2 border border-white-900 text-white font-semibold hover:bg-green-50 transition">
-                    LOGIN
-                </a>
-    </header>
+    <div class="flex items-center justify-between w-full max-w-screen-xl mx-auto gap-4">
+        
+        <a href="{{ route('user.home') }}" class="flex-shrink-0">
+            <img src="{{ asset('images/logo2.png')}}" alt="logo" class="w-[134px]" />
+        </a>
 
- <div class="bg-white">
-            <div class="mx-auto max-w-screen-2xl px-6 py-16">
-                <x-ads/>
-                <div class="flex gap-12 flex-col lg:flex-row">
-                    <aside class="w-full max-w-xs space-y-6">
-                        <h3 class="text-lg font-bold text-gray-800">Categories</h3>
-                        <form method="GET" action="{{ route('home') }}" class="space-y-3">
-                            @foreach($categories as $category)
-                                <label class="flex items-center gap-2">
-                                    <input type="radio" name="category_id" value="{{ $category->id }}"
-                                        class="accent-[#56AB2F]"
-                                        onchange="this.form.submit()"
-                                        {{ request('category_id') == $category->id ? 'checked' : '' }}>
-                                    {{ $category->categoryName }}
-                                </label>
-                            @endforeach
-                            <label class="flex items-center gap-2">
-                                <input type="radio" name="category_id" value=""
-                                    class="accent-[#56AB2F]"
-                                    onchange="this.form.submit()"
-                                    {{ request('category_id') == '' ? 'checked' : '' }}>
-                                All Categories
-                            </label>
-                        </form>
-
-                        <div class="pt-3">
-                            <a href="/login" class="w-full block text-center bg-[#56AB2F] text-white font-semibold py-2 rounded-lg shadow hover:bg-green-700 transition">
-                                Custom Order
-                            </a>
-                        </div>
-                    </aside>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 flex-1">
-                        @forelse ($products as $product)
-                            <div class="group relative bg-white p-2 rounded-lg shadow-sm hover:shadow-md transition">
-                                <img src="{{ asset('storage/' . $product->image) }}"
-                                    alt="{{ $product->productName }}"
-                                    class="aspect-square w-full rounded-md bg-gray-200 object-cover group-hover:opacity-75" />
-                                <div class="mt-4 flex justify-between">
-                                    <div>
-                                        <h3 class="text-sm font-medium text-gray-800">{{ $product->productName }}</h3>
-                                        <p class="mt-1 text-sm text-gray-500">{{ $product->brandName }}</p>
-                                    </div>
-                                    <p class="text-sm font-bold text-gray-900">₱{{ number_format($product->price, 2) }}</p>
-                                </div>
-                            </div>
-                        @empty
-                            <p class="text-gray-500">No products found.</p>
-                        @endforelse
-                    </div>
+        <div class="flex-grow max-w-2xl w-full mx-4">
+            <form method="GET" action="{{ route('user.home') }}" id="searchForm">
+                <div class="flex items-center bg-gray-100 px-4 py-2.5 border border-gray-200 focus-within:border-slate-900 transition-all rounded-xl">
+                    <input type="text"
+                           name="search"
+                           value="{{ request('search') }}"
+                           placeholder="Search something..."
+                           class="w-full text-sm outline-none bg-transparent pr-2"
+                           id="searchInput"
+                           autocomplete="off" />
+                    <button type="submit" hidden></button>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192.904 192.904" width="16px" class="cursor-pointer fill-gray-400">
+                        <path d="m190.707 180.101-47.078-47.077c11.702-14.072 18.752-32.142 18.752-51.831C162.381 36.423 125.959 0 81.191 0 36.422 0 0 36.423 0 81.193c0 44.767 36.422 81.187 81.191 81.187 19.688 0 37.759-7.049 51.831-18.751l47.079 47.078a7.474 7.474 0 0 0 5.303 2.197 7.498 7.498 0 0 0 5.303-12.803zM15 81.193C15 44.694 44.693 15 81.191 15c36.497 0 66.189 29.694 66.189 66.193 0 36.496-29.692 66.187-66.189 66.187C44.693 147.38 15 117.689 15 81.193z"></path>
+                    </svg>
                 </div>
-
-                <div class="mt-10">
-                    {{ $products->withQueryString()->links() }}
-                </div>
-            </div>
+            </form>
         </div>
 
-    <x-footer />
+        <div class="flex items-center gap-14">
+            @auth
+            <a href="{{ route('cart.index') }}" class="relative inline-block">
+                <img src="{{ asset('images/cart.png') }}" alt="Cart" class="w-7 h-7 hover:opacity-80 transition transform hover:scale-110 duration-200" />
+                
+                @php
+                    $cartCount = \App\Models\CartItem::whereHas('cart', function ($q) {
+                        $q->where('user_id', auth()->id());
+                    })->count();
+                @endphp
+
+                @if($cartCount > 0)
+                    <span id="cartBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center transition">
+                        {{ $cartCount }}
+                    </span>
+
+                @endif
+            </a>
+            @endauth
+
+            <a href="/profile">
+                <img src="{{ asset('images/user.png') }}" alt="Profile" class="w-7 h-7 hover:opacity-80 transition" />
+            </a>
+        </div>
+    </div>
+</header>
+            {{$slot}}
+       <x-chat-preview />
+
 </body>
 
 <script>

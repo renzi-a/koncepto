@@ -5,7 +5,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\AdminChatController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserManagementController;
@@ -29,6 +31,8 @@ Route::middleware(['auth', IsAdmin::class])->group(function () {
         Route::get('/admin/chat', [AdminChatController::class, 'index'])->name('admin.chat.index');
         Route::get('/admin/chat/{user}', [AdminChatController::class, 'show'])->name('admin.chat.show');
         Route::post('/admin/chat/{user}', [AdminChatController::class, 'send'])->name('admin.chat.send');
+        Route::get('/admin/chat/{user}/messages', [ChatController::class, 'fetchAdminMessages'])->name('admin.chat.messages');
+
     });
 
     // Product Management
@@ -63,11 +67,27 @@ Route::middleware(['auth', IsAdmin::class])->group(function () {
     });
 });
 
-
-
-
+// USER
 Route::middleware(['auth', IsUser::class])->group(function () {
     Route::get('/user/home2', [UserController::class, 'index'])->name('user.home');
+    Route::get('/user/view_product/{product}', [UserController::class, 'viewProduct'])->name('view_product');
+
+    // Cart
+    Route::get('/user/cart', [CartController::class, 'index'])->name('cart.index');
+    Route::post('/user/cart/update', [CartController::class, 'update'])->name('cart.update');
+    Route::delete('/user/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
+    Route::get('/user/checkout', [CartController::class, 'checkout'])->name('checkout');
+
+    // Chat
+    Route::get('/user/chat-popup', [ChatController::class, 'popup'])->name('user.chat.popup');
+    Route::get('/user/chat', [ChatController::class, 'full'])->name('user.chat.full');
+    Route::post('/user/chat/send', [ChatController::class, 'send'])->name('user.chat.send');
+    Route::get('/chat/messages', [ChatController::class, 'fetchMessages'])->name('user.chat.messages');
+
+
 });
+
+
+
 
 

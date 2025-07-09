@@ -12,8 +12,6 @@ class AdminChatController extends Controller
     public function index()
     {
         $adminId = Auth::id();
-
-        // Get school admins with unread count and preview
         $users = User::where('role', 'school_admin')
             ->with('school')
             ->get()
@@ -72,28 +70,47 @@ class AdminChatController extends Controller
         ]);
     }
 
-   public function send(Request $request, $receiverId)
-{
-    $request->validate([
-        'message' => 'nullable|string|max:1000',
-        'attachment' => 'nullable|file|max:10240',
-    ]);
+    public function send(Request $request, $receiverId)
+    {
+        $request->validate([
+            'message' => 'nullable|string|max:1000',
+            'attachment' => 'nullable|file|max:10240',
+        ]);
 
-    $data = [
-        'sender_id' => Auth::id(),
-        'receiver_id' => $receiverId,
-        'message' => $request->message,
-        'is_read' => false,
-    ];
+        if (!$request->message && !$request->hasFile('attachment')) {
+            return back()->withErrors([
+                'message' => 'Please enter a message or upload an attachment.',
+            ]);
+        }
 
-    if ($request->hasFile('attachment')) {
-        $path = $request->file('attachment')->store('chat_attachments', 'public');
-        $data['attachment'] = $path;
+        $data = [
+            'sender_id' => Auth::id(),
+            'receiver_id' => $receiverId,
+            'message' => $request->message, // This can now be null
+            'is_read' => false,
+        ];
+
+        if ($request->hasFile('attachment')) {
+            $path = $request->file('attachment')->store('chat_attachments', 'public');
+            $data['attachment'] = $path;
+        }
+
+        \App\Models\Message::create($data);
+
+        return redirect()->route('admin.chat.show', $receiverId);
     }
+    public function fetchMessages($userId)
+    {
+        $admin = Auth::user();
+        $user = User::findOrFail($userId);
 
-    \App\Models\Message::create($data);
+        $messages = Message::where(function ($q) use ($admin, $user) {
+            $q->where('sender_id', $admin->id)->where('receiver_id', $user->id);
+        })->orWhere(function ($q) use ($admin, $user) {
+            $q->where('sender_id', $user->id)->where('receiver_id', $admin->id);
+        })->orderBy('created_at')->get(['id', 'sender_id', 'receiver_id', 'message', 'attachment', 'created_at']);
 
-    return redirect()->route('admin.chat.show', $receiverId);
-}
+        return response()->json($messages);
+    }
 
 }

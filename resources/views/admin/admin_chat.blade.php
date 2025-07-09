@@ -1,8 +1,10 @@
 <x-layout />
-<div class="container mx-auto px-4 pt-6 pb-4 min-h-screen flex flex-col">
+<div class="container mx-auto px-4 pt-6 pb-4 h-screen flex flex-col">
+
     <h1 class="text-2xl font-bold mb-4">Messages</h1>
 
-    <div class="flex flex-col md:flex-row border rounded-lg overflow-hidden shadow-lg flex-1">
+    <div class="flex flex-col md:flex-row border rounded-lg overflow-hidden shadow-lg flex-1 min-h-0">
+
         <!-- Sidebar -->
         <div class="w-full md:w-1/4 bg-gray-100 overflow-y-auto border-r">
             <div class="p-4 border-b font-semibold text-gray-700">
@@ -45,7 +47,7 @@
             </div>
 
     <!-- Chat messages -->
-    <div class="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-4">
+    <div id="adminChatMessages" class="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-4">
         @php use Illuminate\Support\Str; @endphp
 
         @foreach ($messages as $message)
@@ -143,3 +145,121 @@
         previewFileName.textContent = '';
     }
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/relativeTime.js"></script>
+<script>dayjs.extend(dayjs_plugin_relativeTime);</script>
+
+@if ($activeUser)
+<script>
+    const currentUserId = {{ auth()->id() }};
+    const chatBox = document.getElementById('adminChatMessages');
+    const form = document.getElementById('chatForm');
+    const input = document.getElementById('attachmentInput');
+    const preview = document.getElementById('attachmentPreview');
+    const previewImg = document.getElementById('previewImage');
+    const previewFileName = document.getElementById('previewFileName');
+
+    function scrollToBottom() {
+        if (chatBox) {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    }
+
+    function renderMessages(messages) {
+        chatBox.innerHTML = '';
+
+        messages.forEach(message => {
+            const isOwn = message.sender_id === currentUserId;
+            const isImage = message.attachment && /\.(jpg|jpeg|png|gif)$/i.test(message.attachment);
+            const fileUrl = `/storage/${message.attachment}`;
+
+            let html = `
+                <div class="flex ${isOwn ? 'justify-end' : 'justify-start'}">
+                    <div class="${isOwn ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'} px-4 py-2 rounded-lg max-w-xs md:max-w-sm shadow space-y-2 text-sm">
+                        ${message.message ? `<div>${message.message}</div>` : ''}
+            `;
+
+            if (message.attachment) {
+                if (isImage) {
+                    html += `<img src="${fileUrl}" class="rounded-md max-w-full border mt-1" />`;
+                } else {
+                    html += `<a href="${fileUrl}" target="_blank" class="underline text-sm text-blue-200 hover:text-white">📎 View Attachment</a>`;
+                }
+            }
+
+            html += `<div class="text-xs text-right mt-1 ${isOwn ? 'text-white/70' : 'text-gray-500'}">
+                        ${dayjs(message.created_at).fromNow()}
+                    </div>
+                </div></div>`;
+
+            chatBox.insertAdjacentHTML('beforeend', html);
+        });
+
+        scrollToBottom();
+    }
+
+    function fetchMessages() {
+        fetch("{{ route('admin.chat.messages', $activeUser->id) }}")
+            .then(res => res.json())
+            .then(data => renderMessages(data));
+    }
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: formData
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('Failed to send message');
+            form.reset();
+            clearAttachment();
+            fetchMessages();
+        })
+        .catch(err => {
+            alert('Failed to send message.');
+            console.error(err);
+        });
+    });
+
+    input.addEventListener('change', function () {
+        if (this.files && this.files[0]) {
+            const file = this.files[0];
+            preview.classList.remove('hidden');
+
+            const isImage = file.type.startsWith('image/');
+            if (isImage) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    previewImg.src = e.target.result;
+                    previewImg.classList.remove('hidden');
+                    previewFileName.textContent = file.name;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewImg.classList.add('hidden');
+                previewImg.src = '';
+                previewFileName.textContent = file.name;
+            }
+        }
+    });
+
+    function clearAttachment() {
+        input.value = '';
+        preview.classList.add('hidden');
+        previewImg.src = '';
+        previewFileName.textContent = '';
+    }
+
+
+    fetchMessages();
+    setInterval(fetchMessages, 3000);
+</script>
+@endif

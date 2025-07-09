@@ -36,7 +36,6 @@ class User extends Authenticatable
         return $this->belongsTo(School::class);
     }
 
-
     public function orders()
     {
         return $this->hasMany(Orders::class);

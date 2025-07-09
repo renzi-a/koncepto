@@ -129,7 +129,7 @@
 <script>
 document.getElementById('schoolForm').addEventListener('submit', function(e) {
     e.preventDefault();
-
+php
     Swal.fire({
         title: "Are you sure?",
         text: "Please confirm to save the school and admin.",
