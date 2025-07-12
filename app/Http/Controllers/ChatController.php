@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class ChatController extends Controller
 {
@@ -78,20 +79,25 @@ class ChatController extends Controller
         ];
 
         if ($request->hasFile('attachment')) {
-            $data['attachment'] = $request->file('attachment')->store('chat_attachments', 'public');
+            $file = $request->file('attachment');
+            $path = $file->store('chat_attachments', 'public');
+
+            $data['attachment'] = $path;
+            $data['original_name'] = $file->getClientOriginalName();
         }
+
 
         Message::create($data);
 
-        return redirect()->route('user.chat.full');
+        return response('', 204);
     }
 
     public function popup()
     {
         $user = Auth::user();
-        $admin = \App\Models\User::where('role', 'admin')->first();
+        $admin = User::where('role', 'admin')->first();
 
-        $messages = \App\Models\Message::where(function ($q) use ($user, $admin) {
+        $messages = Message::where(function ($q) use ($user, $admin) {
             $q->where('sender_id', $user->id)->where('receiver_id', $admin->id);
         })->orWhere(function ($q) use ($user, $admin) {
             $q->where('sender_id', $admin->id)->where('receiver_id', $user->id);
@@ -101,17 +107,58 @@ class ChatController extends Controller
     }
 
     public function full()
+    {
+        $user = Auth::user();
+        $admin = User::where('role', 'admin')->first();
+
+        $messages = Message::where(function ($query) use ($user, $admin) {
+            $query->where('sender_id', $user->id)->where('receiver_id', $admin->id);
+        })->orWhere(function ($query) use ($user, $admin) {
+            $query->where('sender_id', $admin->id)->where('receiver_id', $user->id);
+        })->with('sender')->latest()->limit(50)->get()->reverse();
+
+        return view('user.chat', compact('messages', 'admin'));
+    }
+
+public function fetchMessages()
+    {
+        $user = auth::user();
+        $admin = User::where('role', 'admin')->first();
+
+        $messages = Message::where(function ($q) use ($user, $admin) {
+            $q->where('sender_id', $user->id)->where('receiver_id', $admin->id);
+        })->orWhere(function ($q) use ($user, $admin) {
+            $q->where('sender_id', $admin->id)->where('receiver_id', $user->id);
+        })->with('sender')->orderBy('created_at')->get();
+
+        return response()->json($messages);
+    }
+
+public function typing(Request $request)
 {
-    $user = Auth::user();
-    $admin = \App\Models\User::where('role', 'admin')->first();
+    $userId = Auth::id();
+    $admin = User::where('role', 'admin')->first();
 
-    $messages = \App\Models\Message::where(function ($query) use ($user, $admin) {
-        $query->where('sender_id', $user->id)->where('receiver_id', $admin->id);
-    })->orWhere(function ($query) use ($user, $admin) {
-        $query->where('sender_id', $admin->id)->where('receiver_id', $user->id);
-    })->with('sender')->latest()->limit(50)->get()->reverse();
+    $key = "typing_user_{$userId}_to_{$admin->id}";
+    Cache::put($key, true, now()->addSeconds(3));
 
-    return view('user.chat', compact('messages', 'admin'));
+    return response()->json(['status' => 'ok']);
 }
+
+
+
+public function checkTyping()
+{
+    $userId = Auth::id();
+    $admin = User::where('role', 'admin')->first();
+
+    if (!$admin) return response()->json(['typing' => false]);
+
+    $key = "typing_admin_{$admin->id}_to_user_{$userId}";
+    $isTyping = Cache::has($key);
+
+    return response()->json(['typing' => $isTyping]);
+}
+
 
 }

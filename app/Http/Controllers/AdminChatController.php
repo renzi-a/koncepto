@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Message;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class AdminChatController extends Controller
 {
@@ -86,19 +88,31 @@ class AdminChatController extends Controller
         $data = [
             'sender_id' => Auth::id(),
             'receiver_id' => $receiverId,
-            'message' => $request->message, // This can now be null
+            'message' => $request->message,
             'is_read' => false,
         ];
 
         if ($request->hasFile('attachment')) {
-            $path = $request->file('attachment')->store('chat_attachments', 'public');
+            $file = $request->file('attachment');
+            $path = $file->store('chat_attachments', 'public');
+
             $data['attachment'] = $path;
+            $data['original_name'] = $file->getClientOriginalName();
         }
 
-        \App\Models\Message::create($data);
+
+        Message::create($data);
+
+        Notification::create([
+            'user_id' => $receiverId,
+            'message' => 'New chat message from ' . (Auth::user()->name ?? 'Admin'),
+            'is_read' => false,
+        ]);
 
         return redirect()->route('admin.chat.show', $receiverId);
     }
+
+
     public function fetchMessages($userId)
     {
         $admin = Auth::user();
@@ -108,9 +122,28 @@ class AdminChatController extends Controller
             $q->where('sender_id', $admin->id)->where('receiver_id', $user->id);
         })->orWhere(function ($q) use ($admin, $user) {
             $q->where('sender_id', $user->id)->where('receiver_id', $admin->id);
-        })->orderBy('created_at')->get(['id', 'sender_id', 'receiver_id', 'message', 'attachment', 'created_at']);
+        })
+        ->with('sender')
+        ->orderBy('created_at')
+        ->get(['id', 'sender_id', 'receiver_id', 'message', 'attachment', 'original_name', 'created_at']);
+
 
         return response()->json($messages);
+    }
+    public function typing(Request $request, $userId)
+    {
+        $adminId = Auth::id();
+        $key = "typing_admin_{$adminId}_to_user_{$userId}";
+        Cache::put($key, true, now()->addSeconds(3));
+        return response()->json(['status' => 'ok']);
+    }
+
+    public function checkTyping($userId)
+    {
+        $currentAdmin = auth::id();
+        $key = "typing_user_{$userId}_to_{$currentAdmin}";
+        $isTyping = Cache::has($key);
+        return response()->json(['typing' => $isTyping]);
     }
 
 }

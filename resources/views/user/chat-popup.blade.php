@@ -1,7 +1,15 @@
 <div id="popupChatWindow" class="fixed bottom-20 right-6 w-80 bg-white border shadow-lg rounded-xl z-50 flex flex-col max-h-[70vh]">
     <div class="bg-[#56AB2F] text-white px-4 py-2 flex justify-between items-center">
         <span class="font-semibold">KONCEPTO Chat</span>
-        <button onclick="document.getElementById('inlineMiniChat').remove()">×</button>
+
+        <div class="flex items-center gap-2">
+            <a href="{{ route('user.chat.full') }}" title="Open full chat" class="hover:scale-110 transition">
+                <img src="{{ asset('images/maximize.png') }}" alt="Maximize" class="w-4 h-4">
+            </a>
+            <button onclick="document.getElementById('inlineMiniChat').remove()" title="Close chat" class="hover:scale-110 transition">
+                <img src="{{ asset('images/close.png') }}" alt="Close" class="w-3 h-3">
+            </button>
+        </div>
     </div>
 
     <div id="popupMessages" class="p-3 text-sm overflow-y-auto flex-1 space-y-2 max-h-60">

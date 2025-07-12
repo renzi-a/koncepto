@@ -66,7 +66,6 @@
         </div>
     </div>
 
-    <!-- Related Products -->
     <div class="max-w-6xl mx-auto mt-10">
         <h2 class="text-xl font-bold text-gray-800 mb-4">Related Products</h2>
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -111,7 +110,6 @@
 
 <x-footer />
 
-<!-- JS: Quantity Control -->
 <script>
     function increaseQty(max) {
         const qtyInput = document.getElementById('qtyInput');

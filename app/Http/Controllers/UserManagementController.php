@@ -6,7 +6,7 @@ use App\Models\School;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-
+use Illuminate\Validation\Rule;
 
 class UserManagementController extends Controller
 {
@@ -17,7 +17,7 @@ class UserManagementController extends Controller
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'cp_no' => 'required|string|max:20',
-            'role' => 'required|in:teacher,student',
+            'role' => 'required|in:school_admin,teacher,student',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
@@ -28,9 +28,41 @@ class UserManagementController extends Controller
 
         return redirect()->route('admin.schools.show', $school->id)->with('success', 'User created successfully.');
     }
+
     public function create(School $school)
     {
         return view('admin.schools.user.create', compact('school'));
     }
 
+    public function edit(User $user)
+    {
+        return view('admin.schools.user.edit', compact('user'));
+    }
+
+    public function update(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
+            'cp_no' => 'required|string|max:20',
+            'role' => 'required|in:school_admin,teacher,student',
+            'password' => 'nullable|string|min:8|confirmed',
+        ]);
+
+        $user->first_name = $validated['first_name'];
+        $user->last_name = $validated['last_name'];
+        $user->email = $validated['email'];
+        $user->cp_no = $validated['cp_no'];
+        $user->role = $validated['role'];
+
+        if (!empty($validated['password'])) {
+            $user->password = Hash::make($validated['password']);
+        }
+
+        $user->save();
+
+        return redirect()->route('admin.schools.show', $user->school_id)
+            ->with('success', 'User updated successfully.');
+    }
 }

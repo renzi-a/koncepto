@@ -1,4 +1,4 @@
-<x-layout />
+<x-layout>
 <div class="container mx-auto px-4 py-6">
     <h1 class="text-3xl font-bold mb-6">Edit Product</h1>
 
@@ -72,3 +72,4 @@
         </div>
     </form>
 </div>
+</x-layout>

@@ -34,7 +34,7 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 flex-1">
                         @forelse ($products as $product)
-                            <a href="{{ route('view_product', $product->id) }}" target="_blank"
+                            <a href="{{ route('view_product', $product->id) }}"
                             class="group relative block bg-white p-2 rounded-lg shadow-sm hover:shadow-md transition">
                                 <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->productName }}"
                                     class="aspect-square w-full rounded-md bg-gray-200 object-cover group-hover:opacity-75" />

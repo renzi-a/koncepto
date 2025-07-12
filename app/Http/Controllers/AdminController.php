@@ -3,12 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Orders;
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
-use App\Models\Products;
-use App\Models\Category;
+use App\Models\Orders;
+use App\Models\Product;
 
 class AdminController extends Controller
 {
@@ -33,7 +31,6 @@ class AdminController extends Controller
 
                 $pendingOrdersQuery->whereBetween('created_at', [$startDate, $endDate]);
                 $completedOrdersQuery->whereBetween('created_at', [$startDate, $endDate]);
-
                 $orderDetailQuery->whereBetween('orders.created_at', [$startDate, $endDate]);
             } else {
                 $pendingOrdersQuery->whereYear('created_at', $year);
@@ -45,8 +42,7 @@ class AdminController extends Controller
         $pendingOrders = $pendingOrdersQuery->count();
         $completedOrders = $completedOrdersQuery->count();
 
-        $totalRevenue = $orderDetailQuery
-            ->sum(DB::raw('order_detail.price * order_detail.quantity'));
+        $totalRevenue = $orderDetailQuery->sum(DB::raw('order_detail.price * order_detail.quantity'));
 
         $sales = DB::table('order_detail')
             ->join('orders', 'order_detail.order_id', '=', 'orders.id')
@@ -92,6 +88,38 @@ class AdminController extends Controller
         $topProductsLabels = $topProducts->pluck('productName')->toArray();
         $topProductsData = $topProducts->pluck('total_sold')->toArray();
 
+$salesBySchoolQuery = DB::table('schools')
+    ->leftJoin('users', 'schools.id', '=', 'users.school_id')
+    ->leftJoin('orders', function ($join) {
+        $join->on('users.id', '=', 'orders.user_id')
+             ->where('orders.status', 'completed');
+    })
+    ->leftJoin('order_detail', 'orders.id', '=', 'order_detail.order_id')
+    ->select(
+        'schools.school_name as name',
+        DB::raw('COUNT(DISTINCT orders.id) as total_orders'),
+        DB::raw('COALESCE(SUM(order_detail.price * order_detail.quantity), 0) as total_revenue')
+    )
+    ->groupBy('schools.id', 'schools.school_name');
+
+if ($request->filled('year')) {
+    if ($request->filled('quarter')) {
+        $salesBySchoolQuery->whereBetween('orders.created_at', [$startDate, $endDate]);
+    } else {
+        $salesBySchoolQuery->whereYear('orders.created_at', $year);
+    }
+}
+
+$salesBySchool = $salesBySchoolQuery->get();
+
+
+
+        $products = Product::with('category')
+            ->latest()
+            ->take(10)
+            ->get();
+
+
         return view('admin.dashboard', compact(
             'pendingOrders',
             'completedOrders',
@@ -99,7 +127,9 @@ class AdminController extends Controller
             'salesTrendLabels',
             'salesTrendData',
             'topProductsLabels',
-            'topProductsData'
+            'topProductsData',
+            'salesBySchool',
+            'products' 
         ));
     }
 

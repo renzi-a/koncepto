@@ -18,6 +18,10 @@
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
          <script src="https://cdn.tailwindcss.com"></script>
+         <script src="//unpkg.com/alpinejs" defer></script>
+         <script src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@7.3.0/dist/turbo.min.js"></script>
+
+
         <!-- Styles / Scripts -->
         @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
             @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -29,105 +33,214 @@
             </style>
         @endif
         @stack('scripts')
+        <style>
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+
+  @keyframes bounceScale {
+    0%, 100% { transform: scale(1) translateY(0); opacity: 1; }
+    50% { transform: scale(1.15) translateY(-10%); opacity: 0.8; }
+  }
+
+  .animate-bounceScale {
+    animation: bounceScale 1.2s ease-in-out infinite;
+  }
+
+  #loadingOverlay svg {
+    width: 48px;
+    height: 48px;
+  }
+
+  #loadingOverlay span {
+    font-size: 1.25rem;
+  }
+</style>
+
     </head>
     <!-- component -->
-<body class="font-poppins antialiased bg-[#F0F4F9]">
-  <div id="view" class="h-full w-screen flex flex-row" x-data="{ sidenav: true }">
-    
-    <!-- Mobile Toggle -->
-    <button @click="sidenav = true"
-      class="p-2 border-2 bg-white rounded-md border-gray-200 shadow-lg text-gray-500 focus:bg-teal-500 focus:outline-none focus:text-white absolute top-0 left-0 sm:hidden">
-      <svg class="w-5 h-5 fill-current" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd"
-          d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-          clip-rule="evenodd" />
-      </svg>
-    </button>
-
-    <!-- Sidebar -->
-    <div id="sidebar"
-     class="h-screen shadow-xl px-4 overflow-y-auto transition-transform duration-300 ease-in-out bg-[#56AB2F] text-white"
-     style="width: 25rem;">
-
-
-      <div class="space-y-6 mt-10">
-
-        <!-- Profile -->
-        <div id="profile" class="text-center space-y-2">
-            <div class="pb-3">
-                <img src="{{ asset('images/logo2.png') }}" alt="User Avatar" class="w-[256px] mx-auto" />
-            </div>
-                @auth
-                <h2 class="font-semibold text-2xl">
-                    {{ Auth::user()->first_name }} {{ Auth::user()->last_name }}
-                </h2>
-                <p class="text-lg text-white/70">
-                    {{ Auth::user()->role === 'admin' ? 'Administrator' : ucfirst(Auth::user()->role) }}
-                </p>
-                @endauth
+<style>[x-cloak]{display:none!important;}</style>
+<body x-data="{ showLogoutModal: false }" class="font-poppins antialiased bg-[#F0F4F9] h-screen overflow-hidden">
+  <div id="view" class="flex h-screen w-screen overflow-hidden">
+    <aside class="w-[25rem] fixed transition transform ease-in-out duration-300 z-50 flex h-screen bg-[#56AB2F]">
+      <div class="max-toolbar translate-x-0 w-full transition transform ease-in duration-300 flex items-center justify-between border-4 border-white bg-[#56AB2F] absolute top-2 rounded-full h-14 overflow-hidden px-0">
+        <div class="flex items-center space-x-4 bg-gradient-to-r from-green-700 via-green-600 to-green-500 pl-4 pr-6 py-2 rounded-full text-white w-full">
+          <div class="text-white hover:text-green-200">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>
+            </svg>
+          </div>
+          <div class="font-semibold text-base tracking-wide">Koncepto</div>
         </div>
-
-        <!-- Sidebar Navigation -->
+      </div>
+      <div onclick="openNav()" class="-right-6 transition transform ease-in-out duration-500 flex border-4 border-white bg-[#56AB2F] hover:bg-green-700 absolute top-2 p-3 rounded-full text-white hover:rotate-45">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="w-4 h-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/>
+        </svg>
+      </div>
+      <div class="text-white mt-20 flex-col space-y-2 w-full h-[calc(100vh)] px-4" x-data="{ open: {{ request()->routeIs('product.*') || request()->is('admin/ads*') ? 'true' : 'false' }} }">
+        <div id="profile" class="text-center space-y-2 mb-4">
+          <div class="pb-3">
+            <img src="{{ asset('images/logo2.png') }}" alt="User Avatar" class="w-[160px] md:w-[200px] lg:w-[256px] mx-auto rounded-full"/>
+          </div>
+          @auth
+            <h2 class="font-semibold text-xl lg:text-2xl">{{ Auth::user()->first_name }} {{ Auth::user()->last_name }}</h2>
+            <p class="text-base text-white/70">{{ Auth::user()->role === 'admin' ? 'Administrator' : ucfirst(Auth::user()->role) }}</p>
+          @endauth
+        </div>
         <div id="menu" class="flex flex-col space-y-2 text-white mt-8 px-2">
-            <x-side-link href="{{ route('admin.dashboard') }}" :active="request()->routeIs('admin.dashboard')">
-                <svg class="w-6 h-6 inline-block mr-3" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8v-10h-8v10zm0-18v6h8V3h-8z" />
+          <x-side-link href="{{ route('admin.dashboard') }}" :active="request()->routeIs('admin.dashboard')">
+            <svg class="w-6 h-6 inline-block mr-3 ms-20" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8v-10h-8v10zm0-18v6h8V3h-8z"/>
+            </svg>
+            Dashboard
+          </x-side-link>
+          <div x-data="{ open: {{ (request()->routeIs('product.*') || request()->is('admin/ads*')) ? 'true' : 'false' }} }" x-on:click.outside="if(open && !{{ (request()->routeIs('product.*') || request()->is('admin/ads*')) ? 'true' : 'false' }}) open = false" class="pt-2">
+            <button @click="open = !open" type="button" x-bind:class="open ? '-ml-28 w-[28rem] text-lg text-white font-medium p-4 pl-10 rounded-full flex items-center justify-between bg-[#3E8E24] scale-105 translate-x-12 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-12 transition-all duration-300 ease-in-out' : '-ml-28 w-[28rem] text-lg text-white font-medium p-4 pl-10 rounded-full flex items-center justify-between bg-[#56AB2F] hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-12 transition-all duration-300 ease-in-out'" class="-ml-28 w-[28rem] text-lg text-white font-medium p-4 pl-10 rounded-full flex items-center justify-between bg-[#56AB2F] hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-12 transition-all duration-300 ease-in-out">
+              <div class="flex items-center gap-4">
+                <svg class="w-6 h-6 inline-block ms-20" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zm0 6.75L6.16 7 12 4.25 17.84 7 12 8.75zm0 2.75l-10-5v11l10 5 10-5v-11l-10 5z"/>
                 </svg>
-                Dashboard
-            </x-side-link>
-
-
-             <x-side-link href="{{ route('product.index') }}" :active="request()->routeIs('product.*')">
-                <svg class="w-6 h-6 inline-block mr-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zm0 6.75L6.16 7 12 4.25 17.84 7 12 8.75zm0 2.75l-10-5v11l10 5 10-5v-11l-10 5z" />
-                </svg>
-                Products
-            </x-side-link>
-
-
-            <x-side-link href="#" :active="request()->is('orders')">
-                <svg class="w-6 h-6 inline-block mr-3" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M3 4a1 1 0 011-1h13a1 1 0 011 1v4h3.586A2 2 0 0122 9.414l.586.586A2 2 0 0123 11v6a1 1 0 01-1 1h-1a3 3 0 11-6 0H9a3 3 0 11-6 0H2a1 1 0 01-1-1V5a1 1 0 011-1zm15 2H5v10h1.18A3.001 3.001 0 0112 17h6a3 3 0 012.82-2H20V11l-3-3V6z"/>
-                </svg>
-                Orders
-            </x-side-link>
-
-            <x-side-link href="{{ route('admin.schools.index') }}" :active="request()->routeIs('admin.schools.*')">
-                <svg class="w-6 h-6 inline-block mr-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zm0 6.75L6.16 7 12 4.25 17.84 7 12 8.75zm0 2.75l-10-5v11l10 5 10-5v-11l-10 5z" />
-                </svg>
-                Schools
-            </x-side-link>
-
-            <x-side-link href="{{ route('admin.chat.index') }}" :active="request()->is('admin/chat*')">
-                <svg class="w-6 h-6 inline-block mr-3" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M4 4h16v12H5.17L4 17.17V4zm2 2v6h12V6H6z" />
-                </svg>
-                Messages
-            </x-side-link>
-
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button type="submit"
-                class="flex items-center space-x-4 text-lg px-4 py-3 rounded-md transition hover:bg-white hover:text-[#56AB2F] w-full text-left">
-                <svg class="w-6 h-6 inline-block mr-3" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59z"/>
-                </svg>
-                <span>Log Out</span>
+                <span class="text-xl">Manage Items</span>
+              </div>
+              <svg class="w-4 h-4 transform transition-transform duration-200 mr-4" :class="{ 'rotate-180': open }" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.13l3.71-3.9a.75.75 0 111.08 1.04l-4.25 4.47a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd"/>
+              </svg>
             </button>
+            <template x-if="open">
+              <div class="mt-0.5 space-y-1">
+                <a href="{{ route('product.index') }}" class="relative block text-lg text-white font-medium pl-10 py-3 overflow-hidden group">
+                  <svg class="w-5 h-5 ms-8 inline-block mr-2" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zm0 6.75L6.16 7 12 4.25 17.84 7 12 8.75zm0 2.75l-10-5v11l10 5 10-5v-11l-10 5z"/>
+                  </svg>
+                  Products
+                  <span class="absolute bottom-1 left-10 h-1 bg-white rounded-full transition-all duration-300 group-hover:w-[60%] w-0"></span>
+                </a>
+                <a href="{{ route('admin.ads') }}" class="relative block text-lg text-white font-medium pl-10 py-3 overflow-hidden group">
+                  <svg class="w-5 h-5 ms-8 inline-block mr-2" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M4 4h16v12H5.17L4 17.17V4zm2 2v6h12V6H6z"/>
+                  </svg>
+                  Ads
+                  <span class="absolute bottom-1 left-10 h-1 bg-white rounded-full transition-all duration-300 group-hover:w-[60%] w-0"></span>
+                </a>
+              </div>
+            </template>
+          </div>
+          <x-side-link href="#" :active="request()->is('orders')">
+            <svg class="w-6 h-6 inline-block mr-3 ms-20" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M3 4a1 1 0 011-1h13a1 1 0 011 1v4h3.586A2 2 0 0122 9.414l.586.586A2 2 0 0123 11v6a1 1 0 01-1 1h-1a3 3 0 11-6 0H9a3 3 0 11-6 0H2a1 1 0 01-1-1V5a1 1 0 011-1z"/>
+            </svg>
+            Orders
+          </x-side-link>
+          <x-side-link href="{{ route('admin.schools.index') }}" :active="request()->routeIs('admin.schools.*')">
+            <svg class="w-6 h-6 inline-block mr-3 ms-20" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2L2 7l10 5 10-5-10-5zm0 6.75L6.16 7 12 4.25 17.84 7 12 8.75zm0 2.75l-10-5v11l10 5 10-5v-11l-10 5z"/>
+            </svg>
+            Schools
+          </x-side-link>
+          <x-side-link href="{{ route('admin.chat.index') }}" :active="request()->is('admin/chat*')">
+            <svg class="w-6 h-6 inline-block mr-3 ms-20" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M4 4h16v12H5.17L4 17.17V4zm2 2v6h12V6H6z"/>
+            </svg>
+            Messages
+          </x-side-link>
+        </div>
+        <x-side-link href="#" @click.prevent="showLogoutModal = true">
+          <svg class="w-6 h-6 inline-block mr-3 ms-20" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M16 17l-1.41-1.41L17.17 13H7v-2h10.17l-2.58-2.59L16 7l5 5-5 5z" />
+          </svg>
+          Logout
+        </x-side-link>
+      </div>
+      <div class="mini hidden mt-20 flex flex-col space-y-2 w-full h-[calc(100vh)]"></div>
+    </aside>
+    <main class="flex-1 ml-[25rem] h-screen overflow-y-auto bg-[#F0F4F9] p-6">
+      {{ $slot }}
+    </main>
+  </div>
+  <div x-show="showLogoutModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 overflow-y-auto">
+    <div class="absolute inset-0" @click="showLogoutModal = false"></div>
+    <div @click.stop class="p-4 sm:p-10 bg-gray-50 rounded-md w-[300px] md:w-[500px] text-center relative">
+      <span class="mb-4 inline-flex justify-center items-center w-[62px] h-[62px] rounded-full border-4 border-yellow-50 bg-yellow-100 text-yellow-500 mx-auto">
+        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"></path>
+        </svg>
+      </span>
+      <h3 class="mb-2 text-2xl font-bold text-gray-800">Sign out</h3>
+      <p class="text-gray-500">Are you sure you would like to sign out of your account?</p>
+      <div class="mt-6 flex justify-center gap-x-4">
+        <form method="POST" action="{{ route('logout') }}" id="logoutForm">
+          @csrf
+          <button type="submit"
+            class="py-2.5 px-4 inline-flex justify-center items-center gap-2 rounded-md border font-medium bg-white text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-blue-600 transition-all text-sm"
+            id="logoutBtn">
+            Sign out
+          </button>
         </form>
 
+        <button @click="showLogoutModal = false" type="button"
+          class="py-2.5 px-4 inline-flex justify-center items-center gap-2 rounded-md border border-transparent font-semibold bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all text-sm">
+          Cancel
+        </button>
 
-        </div>
+      </div>
     </div>
-  </div><?php
-    if (auth()->check()) {
-        header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-        header("Pragma: no-cache");
-        header("Expires: Sat, 01 Jan 1990 00:00:00 GMT");
+  </div>
+
+  <div id="loadingOverlay" class="hidden fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
+    <div class="bg-white rounded-xl p-8 shadow-lg flex items-center space-x-5 animate-fadeIn">
+      <svg class="animate-spin animate-bounceScale text-[#56AB2F]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+      </svg>
+      <span class="text-[#56AB2F] font-semibold">Logging out...</span>
+    </div>
+  </div>
+
+  <script>
+    const sidebar = document.querySelector("aside");
+    const maxSidebar = document.querySelector(".max");
+    const miniSidebar = document.querySelector(".mini");
+    const maxToolbar = document.querySelector(".max-toolbar");
+    function openNav() {
+      if (sidebar.classList.contains("-translate-x-48")) {
+        sidebar.classList.remove("-translate-x-48");
+        sidebar.classList.add("translate-x-0");
+        maxSidebar?.classList.remove("hidden");
+        maxSidebar?.classList.add("flex");
+        miniSidebar?.classList.add("hidden");
+        miniSidebar?.classList.remove("flex");
+        maxToolbar?.classList.remove("translate-x-24", "scale-x-0");
+        maxToolbar?.classList.add("translate-x-0");
+      } else {
+        sidebar.classList.add("-translate-x-48");
+        sidebar.classList.remove("translate-x-0");
+        maxSidebar?.classList.add("hidden");
+        maxSidebar?.classList.remove("flex");
+        miniSidebar?.classList.remove("hidden");
+        miniSidebar?.classList.add("flex");
+        maxToolbar?.classList.add("translate-x-24", "scale-x-0");
+        maxToolbar?.classList.remove("translate-x-0");
+      }
     }
-?>
+  </script>
 
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const logoutForm = document.querySelector('form[action="{{ route('logout') }}"]');
+    const overlay = document.getElementById("loadingOverlay");
 
+    if (logoutForm) {
+      logoutForm.addEventListener("submit", function () {
+        overlay.classList.remove("hidden");
+      });
+    }
+  });
+</script>
 
 </body>

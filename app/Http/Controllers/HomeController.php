@@ -9,20 +9,17 @@ use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller
 {
-    public function index(Request $request)
-    {
-        if (Auth::check() && !$request->has('search') && !$request->has('category_id')) {
-            return redirect()->route('user.home');
-        }
+public function index(Request $request)
+{
+    $categories = Category::all();
 
-        $categories = Category::all();
+    $products = Product::with('category')
+        ->when($request->filled('category_id'), fn($q) => $q->where('category_id', $request->category_id))
+        ->when($request->filled('search'), fn($q) => $q->where('productName', 'like', '%' . $request->search . '%'))
+        ->latest()
+        ->paginate(12);
 
-        $products = Product::with('category')
-            ->when($request->filled('category_id'), fn($q) => $q->where('category_id', $request->category_id))
-            ->when($request->filled('search'), fn($q) => $q->where('productName', 'like', '%' . $request->search . '%'))
-            ->latest()
-            ->paginate(12);
+    return view('home', compact('products', 'categories'));
+}
 
-        return view('home', compact('products', 'categories'));
-    }
 }

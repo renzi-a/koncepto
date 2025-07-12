@@ -1,4 +1,4 @@
-<x-layout />
+<x-layout>
 <div class="container mx-auto px-4 py-6">
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold">Add New School & Administrator</h1>
@@ -129,7 +129,7 @@
 <script>
 document.getElementById('schoolForm').addEventListener('submit', function(e) {
     e.preventDefault();
-php
+
     Swal.fire({
         title: "Are you sure?",
         text: "Please confirm to save the school and admin.",
@@ -145,3 +145,4 @@ php
     });
 });
 </script>
+</x-layout>

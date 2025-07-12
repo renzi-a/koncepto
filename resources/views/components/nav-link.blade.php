@@ -57,12 +57,11 @@
                 </div>
             </form>
         </div>
-
         <div class="flex items-center gap-14">
             @auth
             <a href="{{ route('cart.index') }}" class="relative inline-block">
                 <img src="{{ asset('images/cart.png') }}" alt="Cart" class="w-7 h-7 hover:opacity-80 transition transform hover:scale-110 duration-200" />
-                
+
                 @php
                     $cartCount = \App\Models\CartItem::whereHas('cart', function ($q) {
                         $q->where('user_id', auth()->id());
@@ -73,10 +72,57 @@
                     <span id="cartBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center transition">
                         {{ $cartCount }}
                     </span>
-
                 @endif
             </a>
             @endauth
+
+            @php
+                use App\Models\Notification;
+
+                $notifications = Notification::where('user_id', auth()->id())
+                    ->latest()
+                    ->take(7)
+                    ->get();
+
+                $unreadCount = $notifications->where('is_read', false)->count();
+            @endphp
+
+            <div class="relative">
+                <button id="notificationBtn" class="relative">
+                    <img src="{{ asset('images/bell.png') }}" alt="Notifications" class="w-7 h-7 hover:opacity-80 transition transform hover:scale-110 duration-200" />
+
+                    @if ($unreadCount > 0)
+                        <span id="notificationBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                            {{ $unreadCount }}
+                        </span>
+                    @endif
+                </button>
+
+                <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                    <div class="p-3 font-semibold border-b text-gray-700">Notifications</div>
+                    <ul class="max-h-60 overflow-y-auto">
+                        @forelse($notifications as $notification)
+                            <li class="px-4 py-2 text-sm border-b hover:bg-gray-100 transition {{ $notification->is_read ? 'text-gray-400' : 'text-gray-800 font-medium' }}">
+                                <a 
+                                    href="{{ 
+                                        auth()->user()->role === 'admin' 
+                                            ? route('admin.chat.show', $notification->sender_id) 
+                                            : route('user.chat.full') 
+                                    }}" 
+                                    class="block hover:underline"
+                                >
+                                    {{ $notification->message }}
+                                    <div class="text-xs text-gray-400">{{ $notification->created_at->diffForHumans() }}</div>
+                                </a>
+                            </li>
+                        @empty
+                            <li class="px-4 py-2 text-sm text-gray-500">No new notifications</li>
+                        @endforelse
+                    </ul>
+                    <a href="/notifications" class="block text-center text-blue-500 hover:underline text-sm py-2">View All</a>
+                </div>
+            </div>
+
 
             <a href="/profile">
                 <img src="{{ asset('images/user.png') }}" alt="Profile" class="w-7 h-7 hover:opacity-80 transition" />
@@ -93,10 +139,41 @@
     const input = document.getElementById('searchInput');
     let timeout = null;
 
-    input.addEventListener('input', function () {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => {
-            document.getElementById('searchForm').submit();
-        }, 500);
+    if (input) {
+        input.addEventListener('input', function () {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                document.getElementById('searchForm').submit();
+            }, 500);
+        });
+    }
+
+    const bell = document.getElementById('notificationBtn');
+    const dropdown = document.getElementById('notificationDropdown');
+    const badge = document.getElementById('notificationBadge');
+    let hasMarked = false;
+
+    bell.addEventListener('click', () => {
+        dropdown.classList.toggle('hidden');
+
+        if (!hasMarked && !dropdown.classList.contains('hidden')) {
+            hasMarked = true;
+
+            fetch('/notifications/mark-read', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Content-Type': 'application/json'
+                }
+            }).then(() => {
+                if (badge) badge.remove();
+            });
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!bell.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.add('hidden');
+        }
     });
 </script>

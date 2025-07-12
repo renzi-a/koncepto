@@ -2,10 +2,16 @@
     'active' => false,
 ])
 
-<div class="pt-2">
-   <a {{ $attributes->merge(['class' => 'flex items-center text-2xl px-4 py-3 rounded-md transition hover:bg-white hover:text-[#56AB2F]']) }}>
-      <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-      </svg>
-      <span>{{ $slot }}</span>
+@php
+    $base = '-ml-28 w-[28rem] text-lg text-white font-medium p-4 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4';
+    $hover = 'hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-12';
+    $activeClasses = $active ? 'bg-[#3E8E24] scale-105 translate-x-12' : 'bg-[#56AB2F]';
+@endphp
+
+<div>
+   <a {{ $attributes->merge([
+       'class' => "$base $hover $activeClasses"
+   ]) }}>
+      {{ $slot }}
    </a>
 </div>

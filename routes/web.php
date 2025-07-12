@@ -9,10 +9,11 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\AdminChatController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\AdsController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserManagementController;
-
-
+use App\Models\Notification;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Middleware\IsAdmin;
 use App\Http\Middleware\IsUser;
 
@@ -25,15 +26,20 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 // Admin Routes
 Route::middleware(['auth', IsAdmin::class])->group(function () {
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.dashboard');
-    
+    Route::get('/admin/ads', [AdsController::class, 'index'])->name('admin.ads');
+
+
     // Chat
     Route::prefix('admin/chat')->middleware(['auth'])->group(function () {
-        Route::get('/admin/chat', [AdminChatController::class, 'index'])->name('admin.chat.index');
-        Route::get('/admin/chat/{user}', [AdminChatController::class, 'show'])->name('admin.chat.show');
-        Route::post('/admin/chat/{user}', [AdminChatController::class, 'send'])->name('admin.chat.send');
-        Route::get('/admin/chat/{user}/messages', [ChatController::class, 'fetchAdminMessages'])->name('admin.chat.messages');
-
+        Route::get('/', [AdminChatController::class, 'index'])->name('admin.chat.index');
+        Route::get('/{user}', [AdminChatController::class, 'show'])->name('admin.chat.show');
+        Route::post('/{user}', [AdminChatController::class, 'send'])->name('admin.chat.send');
+        Route::get('/{user}/messages', [AdminChatController::class, 'fetchMessages'])->name('admin.chat.messages');
+        Route::post('/{user}/typing', [AdminChatController::class, 'typing'])->name('admin.chat.typing');
+        Route::get('/{user}/typing-check', [AdminChatController::class, 'checkTyping'])->name('admin.chat.checkTyping');
     });
+
+
 
     // Product Management
     Route::prefix('admin/product')->name('product.')->group(function () {
@@ -60,17 +66,29 @@ Route::middleware(['auth', IsAdmin::class])->group(function () {
     Route::prefix('admin/users')->name('admin.users.')->group(function () {
         Route::get('/{school}', [UserManagementController::class, 'index'])->name('index');
         Route::get('/schools/user/create/{school}', [UserManagementController::class, 'create'])->name('create');
-        Route::post('/{school}', [UserManagementController::class, 'store'])->name('store'); // ✅ Add this line
-        Route::get('/edit/{user}', [UserManagementController::class, 'edit'])->name('edit');
+        Route::post('/{school}', [UserManagementController::class, 'store'])->name('store');
+        Route::get('/schools/user/edit/{user}', [UserManagementController::class, 'edit'])->name('edit'); // ✅ fixed here
         Route::put('/{user}', [UserManagementController::class, 'update'])->name('update');
         Route::delete('/{user}', [UserManagementController::class, 'destroy'])->name('destroy');
     });
+
 });
 
 // USER
 Route::middleware(['auth', IsUser::class])->group(function () {
     Route::get('/user/home2', [UserController::class, 'index'])->name('user.home');
     Route::get('/user/view_product/{product}', [UserController::class, 'viewProduct'])->name('view_product');
+    Route::get('/notifications', [UserController::class, 'showNotifications'])->name('notifications');
+    Route::post('/notifications/clear', [UserController::class, 'clearNotifications'])->name('notifications.clear');
+    Route::post('/notifications/mark-read', function () {
+        Notification::where('user_id', Auth::id())
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        return response()->json(['status' => 'marked']);
+    })->middleware('auth')->name('notifications.markRead');
+
+
 
     // Cart
     Route::get('/user/cart', [CartController::class, 'index'])->name('cart.index');
@@ -83,6 +101,8 @@ Route::middleware(['auth', IsUser::class])->group(function () {
     Route::get('/user/chat', [ChatController::class, 'full'])->name('user.chat.full');
     Route::post('/user/chat/send', [ChatController::class, 'send'])->name('user.chat.send');
     Route::get('/chat/messages', [ChatController::class, 'fetchMessages'])->name('user.chat.messages');
+    Route::post('/user/chat/typing', [ChatController::class, 'typing'])->name('user.chat.typing');
+    Route::get('/user/chat/typing-check', [ChatController::class, 'checkTyping'])->name('user.chat.checkTyping');
 
 
 });
