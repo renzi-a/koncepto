@@ -65,4 +65,38 @@ class UserManagementController extends Controller
         return redirect()->route('admin.schools.show', $user->school_id)
             ->with('success', 'User updated successfully.');
     }
+
+    
+public function all(Request $request)
+{
+    $query = User::with('school')->whereIn('role', ['school_admin', 'teacher', 'student']);
+
+    if ($request->filled('role')) {
+        $query->where('role', $request->role);
+    }
+
+    if ($request->filled('school_id')) {
+        $query->where('school_id', $request->school_id);
+    }
+
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('first_name', 'like', "%{$search}%")
+              ->orWhere('last_name', 'like', "%{$search}%")
+              ->orWhere('email', 'like', "%{$search}%");
+        });
+    }
+
+    $users = $query->latest()->paginate(10);
+    $schools = School::orderBy('school_name')->get();
+
+    if ($request->ajax()) {
+        return response()->json([
+            'html' => view('components.user_table', compact('users'))->render()
+        ]);
+    }
+
+    return view('admin.user', compact('users', 'schools'));
+}
 }

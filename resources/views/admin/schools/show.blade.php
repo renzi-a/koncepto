@@ -1,127 +1,174 @@
-@php use Illuminate\Support\Str; @endphp
 <x-layout>
-   <div class="container mx-auto px-4 h-screen flex flex-col">
-
-        <h1 class="text-2xl font-bold mb-4">Messages</h1>
-
-        <div class="flex flex-col md:flex-row border rounded-lg overflow-hidden shadow-lg flex-1 min-h-0">
-
-            <div class="w-full md:w-1/4 bg-gray-100 overflow-y-auto border-r">
-                <div class="p-4 border-b font-semibold text-gray-700">School Admins</div>
-                @foreach ($users as $user)
-                    <a href="{{ route('admin.chat.show', $user->id) }}"
-                       class="flex items-center gap-3 px-4 py-4 hover:bg-gray-200 transition duration-200 {{ $activeUser && $activeUser->id === $user->id ? 'bg-gray-300' : '' }}">
-                        @if ($user->school && $user->school->image)
-                            <img src="{{ asset('storage/' . $user->school->image) }}"
-                                 alt="Logo"
-                                 class="w-14 h-14 rounded-full object-cover border">
-                        @else
-                            <div class="w-14 h-14 bg-blue-600 text-white flex items-center justify-center rounded-full text-xl font-semibold uppercase">
-                                {{ substr($user->first_name, 0, 1) }}{{ substr($user->last_name, 0, 1) }}
-                            </div>
-                        @endif
-                        <div class="flex-1">
-                            <div class="font-semibold text-gray-800 text-base truncate">{{ $user->school->school_name ?? 'N/A School' }}</div>
-                            <div class="text-gray-600 text-sm truncate">{{ $user->first_name }} {{ $user->last_name }}</div>
-                        </div>
-                    </a>
-                @endforeach
+<div class="container mx-auto px-4 py-6">
+    <div class="flex items-center space-x-8 mb-8">
+        @if($school->image)
+            <img src="{{ asset('storage/' . $school->image) }}" alt="School Logo"
+                 class="w-32 h-32 object-cover rounded-full border-4 border-green-600 shadow-md">
+        @else
+            <div class="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 border-4 border-gray-300 shadow-md">
+                No Logo
             </div>
+        @endif
 
-            <div class="w-full md:w-3/4 flex flex-col min-h-0">
-
-                <div class="p-4 border-b bg-white flex justify-between items-center">
-                    <h2 class="font-semibold text-gray-800 text-lg">
-                        @if ($activeUser)
-                            {{ $activeUser->school->school_name ?? 'Unknown School' }}
-                            <span class="block text-sm font-normal text-gray-500">
-                                {{ $activeUser->first_name }} {{ $activeUser->last_name }}
-                            </span>
-                        @else
-                            <span class="text-sm font-normal text-gray-500">Select a school admin to start chatting</span>
-                        @endif
-                    </h2>
-                </div>
-
-                <div id="adminChatMessages" class="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-4">
-                    @foreach ($messages as $message)
-                        <div class="flex {{ $message->sender_id === auth()->id() ? 'justify-end' : 'justify-start' }}">
-                            <div class="{{ $message->sender_id === auth()->id() ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800' }} px-4 py-2 rounded-lg max-w-xs md:max-w-sm shadow space-y-2">
-                                @if ($message->message)
-                                    <div>{{ $message->message }}</div>
-                                @endif
-
-                                @if ($message->attachment)
-                                    @php
-                                        $fileUrl = asset('storage/' . $message->attachment);
-                                        $isImage = Str::startsWith($message->attachment, 'chat_attachments/') &&
-                                                   preg_match('/\.(jpg|jpeg|png|gif)$/i', $message->attachment);
-                                    @endphp
-
-                                    @if ($isImage)
-                                        <img src="{{ $fileUrl }}" alt="attachment" class="rounded-md max-w-full border" />
-                                    @else
-                                            <a href="{{ $fileUrl }}" target="_blank" class="underline text-sm text-blue-600 hover:text-blue-800">
-                                            {{ basename($message->original_name ?? $message->attachment) }}
-                                        </a>
-                                    @endif
-                                @endif
-
-                                <div class="text-xs text-right mt-1 {{ $message->sender_id === auth()->id() ? 'text-white/70' : 'text-gray-500' }}">
-                                    {{ $message->created_at->diffForHumans() }}
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-
-                    <div id="typingIndicator" class="hidden flex justify-start">
-                        <div class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg max-w-xs md:max-w-sm shadow">
-                            <div class="flex gap-1">
-                                <span class="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:0.1s]"></span>
-                                <span class="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:0.3s]"></span>
-                                <span class="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:0.5s]"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                @if ($activeUser)
-                    <form action="{{ route('admin.chat.send', $activeUser->id) }}" method="POST" enctype="multipart/form-data" class="p-4 border-t bg-white" id="chatForm">
-                        @csrf
-                            <div id="attachmentPreview" class="mb-2 ml-10 text-sm text-gray-700 flex items-center gap-2 hidden">
-                                <img id="previewImage" src="" class="w-16 h-16 object-cover border rounded" />
-                                <span id="previewFileName" class="truncate max-w-[150px]"></span>
-                                <button type="button" onclick="clearAttachment()" class="text-red-500 hover:underline text-xs">Remove</button>
-                            </div>
-
-                            <div class="flex items-center gap-3">
-                                <label for="attachmentInput" class="cursor-pointer shrink-0">
-                                    <img src="{{ asset('images/clip.png') }}" alt="Attach" class="w-6 h-6 hover:opacity-80 transition" />
-                                </label>
-                                <input type="file" name="attachment" id="attachmentInput" class="hidden" accept="image/*,.pdf,.doc,.docx" />
-                                <input type="text" name="message" id="messageInput" placeholder="Type a message..."
-                                    class="flex-1 border px-4 py-2 rounded-lg text-sm focus:outline-none focus:ring focus:border-blue-400" />
-                                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm">
-                                    Send
-                                </button>
-                            </div>
-                    </form>
-                @endif
-            </div>
+        <div>
+            <h1 class="text-4xl font-bold text-gray-800">{{ $school->school_name }}</h1>
+            <p class="text-lg text-gray-600 mt-2">{{ $school->address }}</p>
+            <p class="text-md text-gray-500">{{ $school->school_email }}</p>
         </div>
     </div>
 
-    <script>
-        const inputField = document.getElementById('messageInput');
-        const typingIndicator = document.getElementById('typingIndicator');
-        let typingTimer;
+    <div class="mb-4 border-b border-gray-200">
+        <ul class="flex space-x-4">
+            <li>
+                <a href="#admin" class="tab-link font-semibold text-green-600 border-b-2 border-green-600 pb-2" onclick="showTab('admin')">School Admin</a>
+            </li>
+            <li>
+                <a href="#teachers" class="tab-link font-semibold text-gray-600 hover:text-green-600 pb-2" onclick="showTab('teachers')">Teachers</a>
+            </li>
+            <li>
+                <a href="#students" class="tab-link font-semibold text-gray-600 hover:text-green-600 pb-2" onclick="showTab('students')">Students</a>
+            </li>
+        </ul>
+    </div>
 
-        inputField.addEventListener('input', () => {
-            typingIndicator.classList.remove('hidden');
-            clearTimeout(typingTimer);
-            typingTimer = setTimeout(() => {
-                typingIndicator.classList.add('hidden');
-            }, 2000);
+    {{-- ADMIN TAB --}}
+    <div id="admin" class="tab-content">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold text-gray-800">School Administrator</h2>
+            <a href="{{ route('admin.users.create', $school->id) }}"
+               class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
+                Add User
+            </a>
+        </div>
+
+        @if ($school->user)
+            <div class="bg-white border rounded-lg px-4 py-3 flex justify-between items-center shadow-sm">
+                <div>
+                    <p class="text-lg font-semibold text-gray-900">
+                        {{ $school->user->first_name }} {{ $school->user->last_name }}
+                    </p>
+                    <p class="text-sm text-gray-700">{{ $school->user->email }}</p>
+                    <p class="text-sm text-gray-700">{{ $school->user->cp_no }}</p>
+                    <span class="inline-block text-sm px-2 py-1 mt-1 bg-green-100 text-green-800 rounded">
+                        {{ ucfirst($school->user->role) }}
+                    </span>
+                </div>
+
+                <div class="flex space-x-3">
+                    <a href="{{ route('admin.users.edit', $school->user->id) }}" class="hover:scale-110 transition">
+                        <img src="{{ asset('images/icons/edit.png') }}" alt="Edit" class="w-5 h-5">
+                    </a>
+                    <form action="" method="POST" onsubmit="return confirm('Delete this user?');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="hover:scale-110 transition">
+                            <img src="{{ asset('images/icons/delete.png') }}" alt="Delete" class="w-5 h-5">
+                        </button>
+                    </form>
+                </div>
+            </div>
+        @else
+            <p class="text-gray-500 text-base">No school admin linked.</p>
+        @endif
+    </div>
+
+    {{-- TEACHERS TAB --}}
+    <div id="teachers" class="tab-content hidden">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold text-gray-800">Teachers</h2>
+        </div>
+
+        @php $teachers = $school->users->where('role', 'teacher'); @endphp
+
+        @if($teachers->isEmpty())
+            <p class="text-gray-500 text-base">No teachers found.</p>
+        @else
+            <ul class="space-y-2">
+                @foreach ($teachers as $teacher)
+                    <li class="bg-white border rounded-lg px-4 py-3 flex justify-between items-center shadow-sm">
+                        <div>
+                            <p class="text-lg font-semibold text-gray-900">
+                                {{ $teacher->first_name }} {{ $teacher->last_name }}
+                            </p>
+                            <p class="text-sm text-gray-700">{{ $teacher->email }}</p>
+                            <p class="text-sm text-gray-700">{{ $teacher->cp_no }}</p>
+                            <span class="inline-block text-sm px-2 py-1 mt-1 bg-blue-100 text-blue-800 rounded">
+                                {{ ucfirst($teacher->role) }}
+                            </span>
+                        </div>
+                        <div class="flex space-x-3">
+                            <a href="{{ route('admin.users.edit', $teacher->id) }}" class="hover:scale-110 transition">
+                                <img src="{{ asset('images/icons/edit.png') }}" alt="Edit" class="w-5 h-5">
+                            </a>
+                            <form action="" method="POST" onsubmit="return confirm('Delete this user?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="hover:scale-110 transition">
+                                    <img src="{{ asset('images/icons/delete.png') }}" alt="Delete" class="w-5 h-5">
+                                </button>
+                            </form>
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+    </div>
+
+    <div id="students" class="tab-content hidden">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold text-gray-800">Students</h2>
+        </div>
+
+        @php $students = $school->users->where('role', 'student'); @endphp
+
+        @if($students->isEmpty())
+            <p class="text-gray-500 text-base">No students found.</p>
+        @else
+            <ul class="space-y-2">
+                @foreach ($students as $student)
+                    <li class="bg-white border rounded-lg px-4 py-3 flex justify-between items-center shadow-sm">
+                        <div>
+                            <p class="text-lg font-semibold text-gray-900">
+                                {{ $student->first_name }} {{ $student->last_name }}
+                            </p>
+                            <p class="text-sm text-gray-700">{{ $student->email }}</p>
+                            <p class="text-sm text-gray-700">{{ $student->cp_no }}</p>
+                            <span class="inline-block text-sm px-2 py-1 mt-1 bg-yellow-100 text-yellow-800 rounded">
+                                {{ ucfirst($student->role) }}
+                            </span>
+                        </div>
+                        <div class="flex space-x-3">
+                            <a href="{{ route('admin.users.edit', $student->id) }}" class="hover:scale-110 transition">
+                                <img src="{{ asset('images/icons/edit.png') }}" alt="Edit" class="w-5 h-5">
+                            </a>
+                            <form action="" method="POST" onsubmit="return confirm('Delete this user?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="hover:scale-110 transition">
+                                    <img src="{{ asset('images/icons/delete.png') }}" alt="Delete" class="w-5 h-5">
+                                </button>
+                            </form>
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+    </div>
+</div>
+
+<script>
+    function showTab(tab) {
+        const contents = document.querySelectorAll('.tab-content');
+        const links = document.querySelectorAll('.tab-link');
+
+        contents.forEach(c => c.classList.add('hidden'));
+        links.forEach(l => {
+            l.classList.remove('text-green-600', 'border-green-600', 'border-b-2');
+            l.classList.add('text-gray-600');
         });
-    </script>
+
+        document.getElementById(tab).classList.remove('hidden');
+        document.querySelector(`a[href="#${tab}"]`).classList.add('text-green-600', 'border-b-2', 'border-green-600');
+    }
+</script>
 </x-layout>

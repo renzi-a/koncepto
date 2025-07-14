@@ -61,15 +61,16 @@ Route::middleware(['auth', IsAdmin::class])->group(function () {
         Route::put('/{school}', [SchoolController::class, 'update'])->name('update');
         Route::delete('/{school}', [SchoolController::class, 'destroy'])->name('destroy');
     });
-
     // User Management per School
     Route::prefix('admin/users')->name('admin.users.')->group(function () {
-        Route::get('/{school}', [UserManagementController::class, 'index'])->name('index');
+         Route::get('/', [UserManagementController::class, 'all'])->name('index');
+        Route::get('/{school}', [UserManagementController::class, 'index'])->name('school');
         Route::get('/schools/user/create/{school}', [UserManagementController::class, 'create'])->name('create');
         Route::post('/{school}', [UserManagementController::class, 'store'])->name('store');
-        Route::get('/schools/user/edit/{user}', [UserManagementController::class, 'edit'])->name('edit'); // ✅ fixed here
+        Route::get('/schools/user/edit/{user}', [UserManagementController::class, 'edit'])->name('edit'); 
         Route::put('/{user}', [UserManagementController::class, 'update'])->name('update');
         Route::delete('/{user}', [UserManagementController::class, 'destroy'])->name('destroy');
+       
     });
 
 });
@@ -80,20 +81,14 @@ Route::middleware(['auth', IsUser::class])->group(function () {
     Route::get('/user/view_product/{product}', [UserController::class, 'viewProduct'])->name('view_product');
     Route::get('/notifications', [UserController::class, 'showNotifications'])->name('notifications');
     Route::post('/notifications/clear', [UserController::class, 'clearNotifications'])->name('notifications.clear');
-    Route::post('/notifications/mark-read', function () {
-        Notification::where('user_id', Auth::id())
-            ->where('is_read', false)
-            ->update(['is_read' => true]);
-
-        return response()->json(['status' => 'marked']);
-    })->middleware('auth')->name('notifications.markRead');
-
-
+    Route::post('/notifications/mark-read', [UserController::class, 'markAsRead'])
+        ->middleware('auth')
+        ->name('notifications.markRead');
 
     // Cart
     Route::get('/user/cart', [CartController::class, 'index'])->name('cart.index');
-    Route::post('/user/cart/update', [CartController::class, 'update'])->name('cart.update');
-    Route::delete('/user/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
+    Route::post('/cart/update', [CartController::class, 'update'])->name('cart.update');
+    Route::delete('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
     Route::get('/user/checkout', [CartController::class, 'checkout'])->name('checkout');
 
     // Chat
@@ -103,7 +98,14 @@ Route::middleware(['auth', IsUser::class])->group(function () {
     Route::get('/chat/messages', [ChatController::class, 'fetchMessages'])->name('user.chat.messages');
     Route::post('/user/chat/typing', [ChatController::class, 'typing'])->name('user.chat.typing');
     Route::get('/user/chat/typing-check', [ChatController::class, 'checkTyping'])->name('user.chat.checkTyping');
-
+    Route::get('/chat/source', [ChatController::class, 'getChatSource'])->name('user.chat.source');
+    
+    Route::get('/user/dashboard', [UserController::class, 'dashboard'])->name('user.dashboard');
+    Route::get('/user/profile', [UserController::class, 'profile'])->name('user.profile');
+    Route::get('/user/order-request', [UserController::class, 'orderRequest'])->name('user.order-request');
+    Route::get('/user/track-order', [UserController::class, 'trackOrder'])->name('user.track-order');
+    Route::get('/user/order-history', [UserController::class, 'orderHistory'])->name('user.order-history');
+    Route::get('/user/users', [UserController::class, 'users'])->name('user.users');
 
 });
 

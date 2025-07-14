@@ -44,9 +44,12 @@
                 </div>
 
                 <div id="adminChatMessages" class="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-4"></div>
-                <div id="typingIndicator" class="px-4 py-2 text-sm text-gray-500 animate-pulse hidden">
-                    {{ $activeUser->first_name }} is typing...
-                </div>
+                    @if ($activeUser)
+                        <div id="typingIndicator" class="px-4 py-2 text-sm text-gray-500 animate-pulse hidden">
+                            {{ $activeUser->first_name }} is typing...
+                        </div>
+                    @endif
+
 
                 @if ($activeUser)
                     <form action="{{ route('admin.chat.send', $activeUser->id) }}" method="POST" enctype="multipart/form-data" class="p-4 border-t bg-white" id="chatForm">

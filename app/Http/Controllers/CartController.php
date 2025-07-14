@@ -14,7 +14,7 @@ class CartController extends Controller
     {
         $user = auth::user();
 
-        $cart = \App\Models\Cart::firstOrCreate(['user_id' => $user->id]);
+        $cart = Cart::firstOrCreate(['user_id' => $user->id]);
 
         $cartItems = $cart->items()->with('product')->get();
 
@@ -42,58 +42,72 @@ class CartController extends Controller
     }
 
 public function update(Request $request)
-    {
-        $user = Auth::user();
-        $cart = Cart::firstOrCreate(['user_id' => $user->id]);
-        if ($request->has('items')) {
-            foreach ($request->items as $id => $data) {
-                $productId = $data['product_id'] ?? null;
-                $quantity = $data['quantity'] ?? 1;
-
-                if (!$productId) continue;
-
-                $product = Product::find($productId);
-                if (!$product) continue;
-
-                $quantity = min($quantity, $product->quantity);
-
-                $cartItem = CartItem::find($id);
-                if ($cartItem && $cartItem->cart_id === $cart->id) {
-                    $cartItem->update(['quantity' => $quantity]);
-                }
-            }
-
-            return response()->json(['success' => true]);
-        }
-
-        $validated = $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
-        ]);
-
-        $product = Product::find($validated['product_id']);
-
-        $cartItem = $cart->items()->where('product_id', $validated['product_id'])->first();
-        if ($cartItem) {
-            $newQty = min($cartItem->quantity + $validated['quantity'], $product->quantity);
-            $cartItem->update(['quantity' => $newQty]);
-        } else {
-            $cart->items()->create([
-                'product_id' => $validated['product_id'],
-                'quantity' => min($validated['quantity'], $product->quantity),
-            ]);
-        }
-
-        return redirect()->back()->with('added_to_cart', 'Product added to cart!');
+{
+    $user = Auth::user();
+    if (!$user) {
+        return response()->json(['error' => 'Unauthenticated'], 401);
     }
 
+    $cart = Cart::firstOrCreate(['user_id' => $user->id]);
+    if ($request->has('items')) {
+        foreach ($request->items as $id => $data) {
+            $productId = $data['product_id'] ?? null;
+            $quantity = $data['quantity'] ?? 1;
 
+            if (!$productId) continue;
 
+            $product = Product::find($productId);
+            if (!$product) continue;
+
+            $quantity = min($quantity, $product->quantity);
+
+            $cartItem = CartItem::find($id);
+            if ($cartItem && $cartItem->cart_id === $cart->id) {
+                $cartItem->update(['quantity' => $quantity]);
+            }
+        }
+
+        return response()->json(['success' => true]);
+    }
+    $validated = validator($request->all(), [
+        'product_id' => 'required|exists:products,id',
+        'quantity' => 'required|integer|min:1',
+    ]);
+
+    if ($validated->fails()) {
+        return response()->json(['errors' => $validated->errors()], 422);
+    }
+
+    $data = $validated->validated();
+
+    $product = Product::find($data['product_id']);
+    if (!$product) {
+        return response()->json(['error' => 'Product not found'], 404);
+    }
+
+    $quantity = min($data['quantity'], $product->quantity);
+
+$cartItem = $cart->items()->where('product_id', $product->id)->first();
+if ($cartItem) {
+    $cartItem->update(['quantity' => $cartItem->quantity + $quantity]); 
+} else {
+    $cart->items()->create([
+        'product_id' => $product->id,
+        'quantity' => $quantity,
+    ]);
+}
+    return response()->json([
+    'message' => 'Added to cart',
+    'cart_count' => $cart->items()->sum('quantity'),
+]);
+
+}
     public function remove($itemId)
     {
         $item = CartItem::findOrFail($itemId);
         $item->delete();
 
-        return redirect()->back()->with('success', 'Item removed from cart');
+        return response()->json(['success' => true]);
     }
+
 }

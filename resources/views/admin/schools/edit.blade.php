@@ -27,7 +27,6 @@
         @csrf
         @method('PUT')
 
-        {{-- School Info --}}
         <div>
             <h2 class="text-xl font-semibold mb-4">School Information</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -45,6 +44,9 @@
                            required class="w-full border border-gray-300 px-3 py-2 rounded">
                 </div>
 
+                <input type="hidden" name="lat" id="latitude" value="{{ old('lat', $school->latitude) }}">
+                <input type="hidden" name="lng" id="longitude" value="{{ old('lng', $school->longitude) }}">
+
                 <div>
                     <label for="school_email" class="block font-semibold mb-1">School Email</label>
                     <input type="email" name="school_email" id="school_email"
@@ -54,16 +56,19 @@
 
                 <div>
                     <label for="logo" class="block font-semibold mb-1">School Logo</label>
-                    <input type="file" name="logo" id="logo"
-                           class="w-full border border-gray-300 px-3 py-2 rounded">
+                    <input type="file" name="logo" id="logo" class="w-full border border-gray-300 px-3 py-2 rounded">
                     @if($school->image)
                         <img src="{{ asset('storage/' . $school->image) }}" alt="Logo" class="w-16 h-16 mt-2">
                     @endif
                 </div>
+
+                <div class="md:col-span-2">
+                    <label class="block font-semibold mb-1">Select Location on Map</label>
+                    <div id="map" class="w-full h-64 border rounded"></div>
+                </div>
             </div>
         </div>
 
-        {{-- Admin Info --}}
         <div>
             <h2 class="text-xl font-semibold mb-4">Administrative Officer</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -95,12 +100,7 @@
                            required class="w-full border border-gray-300 px-3 py-2 rounded">
                 </div>
 
-                <div>
-                    <label for="admin_role" class="block font-semibold mb-1">Role</label>
-                    <select name="admin_role" id="admin_role" required class="w-full border border-gray-300 px-3 py-2 rounded">
-                        <option value="school_admin" selected>School Admin</option>
-                    </select>
-                </div>
+                <input type="hidden" name="admin_role" value="school_admin">
 
                 <div class="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -125,29 +125,121 @@
         </div>
     </form>
 </div>
-@push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const form = document.getElementById('schoolForm');
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
+<div id="loadingOverlay" class="hidden fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
+  <div class="bg-white rounded-xl p-8 shadow-lg flex items-center space-x-5 animate-fadeIn">
+    <div class="animate-bounceScale">
+      <svg class="animate-spin text-[#2563EB]" xmlns="http://www.w3.org/2000/svg" fill="none"
+        viewBox="0 0 24 24" stroke="currentColor">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor"
+          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+      </svg>
+    </div>
+    <span class="text-blue-600 font-semibold text-lg">Saving...</span>
+  </div>
+</div>
 
-            Swal.fire({
-                title: "Are you sure?",
-                text: "Please confirm to save the school and admin.",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonColor: "#16a34a",
-                cancelButtonColor: "#d33",
-                confirmButtonText: "Yes, save it!"
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit();
+@push('scripts')
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const latInput = document.getElementById("latitude");
+    const lngInput = document.getElementById("longitude");
+    const nameInput = document.getElementById("school_name");
+    const addressInput = document.getElementById("address");
+
+    // Parse values from hidden inputs or use default if completely missing
+    let lat = parseFloat(latInput.value);
+    let lng = parseFloat(lngInput.value);
+
+    // If values are not valid numbers, use default coordinates
+    if (isNaN(lat) || isNaN(lng)) {
+        lat = 14.0681;
+        lng = 120.7178;
+        latInput.value = lat.toFixed(6);
+        lngInput.value = lng.toFixed(6);
+    }
+
+    const map = L.map('map').setView([lat, lng], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    const marker = L.marker([lat, lng], {
+        draggable: true
+    }).addTo(map);
+
+    function updateFields(lat, lng) {
+        latInput.value = lat.toFixed(6);
+        lngInput.value = lng.toFixed(6);
+
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data?.name && data?.display_name) {
+                    nameInput.value = data.name;
+                    addressInput.value = data.display_name.replace(data.name + ", ", "");
+                } else {
+                    addressInput.value = data.display_name || '';
                 }
             });
+    }
+
+    marker.on('dragend', (e) => {
+        const { lat, lng } = e.target.getLatLng();
+        updateFields(lat, lng);
+    });
+
+    map.on('click', (e) => {
+        marker.setLatLng(e.latlng);
+        updateFields(e.latlng.lat, e.latlng.lng);
+    });
+
+    document.getElementById('schoolForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        Swal.fire({
+            title: "Are you sure?",
+            text: "Please confirm to save the school and admin.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#16a34a",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, save it!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById("loadingOverlay").classList.remove("hidden");
+                this.submit();
+            }
         });
     });
+});
+
 </script>
 @endpush
+@push('styles')
+<style>
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+
+  @keyframes bounceScale {
+    0%, 100% { transform: scale(1) translateY(0); opacity: 1; }
+    50% { transform: scale(1.15) translateY(-10%); opacity: 0.8; }
+  }
+
+  .animate-bounceScale {
+    animation: bounceScale 1.2s ease-in-out infinite;
+  }
+</style>
+@endpush
+
 </x-layout>

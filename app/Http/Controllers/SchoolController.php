@@ -37,6 +37,8 @@ class SchoolController extends Controller
             'address' => 'required|string|max:255',
             'school_email' => 'required|email|unique:schools,school_email',
             'logo' => 'nullable|image|max:2048',
+            'lat' => 'required|numeric',
+            'lng' => 'required|numeric',
 
             'admin_first_name' => 'required|string|max:255',
             'admin_last_name' => 'required|string|max:255',
@@ -46,7 +48,6 @@ class SchoolController extends Controller
             'admin_password' => 'required|string|min:8|confirmed',
         ]);
 
-        // Create the user first
         $user = User::create([
             'first_name' => $validated['admin_first_name'],
             'last_name' => $validated['admin_last_name'],
@@ -56,33 +57,37 @@ class SchoolController extends Controller
             'password' => Hash::make($validated['admin_password']),
         ]);
 
-        // Upload logo if present
         $logoPath = null;
         if ($request->hasFile('logo')) {
             $logoPath = $request->file('logo')->store('logos', 'public');
         }
 
-        // Create the school
         $school = School::create([
-            'school_name' => $validated['school_name'],
-            'address' => $validated['address'],
-            'school_email' => $validated['school_email'],
-            'image' => $logoPath,
-            'user_id' => $user->id, // Store reference to admin
-        ]);
+                'school_name' => $validated['school_name'],
+                'address' => $validated['address'],
+                'school_email' => $validated['school_email'],
+                'image' => $logoPath,
+                'user_id' => $user->id,
+                'lat' => $request->lat,
+                'lng' => $request->lng,
+            ]);
 
-        // 🔧 Fix: Now set the school_id on the user
         $user->school_id = $school->id;
         $user->save();
 
         return redirect()->route('admin.schools.show', $school)->with('success', 'School and Admin created.');
     }
 
-        public function show(School $school)
-        {
-            $school->load(['user', 'orders', 'users']);
-            return view('admin.schools.show', compact('school'));
-        }
+public function show(School $school)
+{
+    $school->load(['user', 'orders', 'users']);
+    $users = $school->users;
+    $activeUser = $school->user;
+
+    return view('admin.schools.show', compact('school', 'users', 'activeUser'));
+}
+
+
 
 
     public function edit(School $school)
@@ -99,6 +104,8 @@ class SchoolController extends Controller
             'address' => 'required|string|max:255',
             'school_email' => 'required|email|unique:schools,school_email,' . $school->id,
             'logo' => 'nullable|image|max:2048',
+            'lat' => 'required|numeric',
+            'lng' => 'required|numeric',
 
             'admin_first_name' => 'required|string|max:255',
             'admin_last_name' => 'required|string|max:255',
@@ -128,6 +135,8 @@ class SchoolController extends Controller
             'school_name' => $validated['school_name'],
             'address' => $validated['address'],
             'school_email' => $validated['school_email'],
+            'lat' => $request->lat,
+            'lng' => $request->lng,
         ]);
 
         return redirect()->route('admin.schools.index')->with('success', 'School and Admin updated successfully.');

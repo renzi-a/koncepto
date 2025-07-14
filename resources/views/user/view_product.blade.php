@@ -45,8 +45,7 @@
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
-                <form method="POST" action="{{ route('cart.update') }}" class="mt-6 flex flex-col sm:flex-row gap-4">
+                <form id="addToCartForm" class="mt-6 flex flex-col sm:flex-row gap-4">
                     @csrf
                     <input type="hidden" name="product_id" value="{{ $product->id }}">
                     <input type="hidden" name="quantity" id="formQtyInput" value="1">
@@ -62,6 +61,7 @@
                         Add to Cart
                     </button>
                 </form>
+                </div>
             </div>
         </div>
     </div>
@@ -92,23 +92,75 @@
             @empty
                 <p class="text-gray-500 col-span-full">No related products found.</p>
             @endforelse
-        </div>
+        </div> 
+    </div>
+</div>
+</div>
+<div 
+    x-data="{ show: false }" 
+    x-init="
+        window.addEventListener('show-cart-toast', () => {
+            show = true;
+            setTimeout(() => show = false, 500);
+        });
+    "
+    x-show="show"
+    x-transition.opacity.duration.300ms
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40"
+    style="display: none;"
+>
+    <div class="bg-white text-green-700 px-8 py-5 rounded-xl shadow-2xl text-lg font-semibold">
+        ✅ Added to cart!
     </div>
 </div>
 
-@if(session('added_to_cart'))
-<div
-    x-data="{ show: true }"
-    x-init="setTimeout(() => show = false, 3000)"
-    x-show="show"
-    x-transition
-    class="fixed bottom-6 right-6 bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg z-50"
->
-    ✅ {{ session('added_to_cart') }}
-</div>
-@endif
+
 
 <x-footer />
+
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+<script>
+document.getElementById('addToCartForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const data = new FormData(form);
+
+    fetch("{{ route('cart.update') }}", {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        },
+        body: data
+    })
+    .then(async res => {
+        if (!res.ok) throw await res.json();
+        return res.json();
+    })
+    .then(data => {
+        window.dispatchEvent(new CustomEvent('show-cart-toast'));
+
+        let badge = document.getElementById('cartBadge');
+        const cartLink = document.querySelector('a[href="{{ route('cart.index') }}"]'); 
+
+        if (!badge && cartLink) {
+            badge = document.createElement('span');
+            badge.id = 'cartBadge';
+            badge.className = 'absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center';
+            cartLink.classList.add('relative');
+            cartLink.appendChild(badge);
+        }
+
+        if (badge) {
+            badge.textContent = data.cart_count;
+            badge.classList.add('animate-bounce');
+            setTimeout(() => badge.classList.remove('animate-bounce'), 1000);
+        }
+    });
+});
+</script>
 
 <script>
     function increaseQty(max) {
@@ -117,6 +169,7 @@
         if (current < max) {
             qtyInput.value = current + 1;
         }
+        document.getElementById('formQtyInput').value = qtyInput.value;
     }
 
     function decreaseQty() {
@@ -125,6 +178,7 @@
         if (current > 1) {
             qtyInput.value = current - 1;
         }
+        document.getElementById('formQtyInput').value = qtyInput.value;
     }
 
     const qtyInput = document.getElementById('qtyInput');
@@ -134,27 +188,11 @@
         formQtyInput.value = qtyInput.value;
     });
 
-    function increaseQty(max) {
-        let current = parseInt(qtyInput.value) || 1;
-        if (current < max) {
-            qtyInput.value = current + 1;
-            formQtyInput.value = qtyInput.value;
-        }
-    }
-
-    function decreaseQty() {
-        let current = parseInt(qtyInput.value) || 1;
-        if (current > 1) {
-            qtyInput.value = current - 1;
-            formQtyInput.value = qtyInput.value;
-        }
-    }
-
     function buyNow(productId) {
-        // You can handle Buy Now with a different route if needed
         alert("Buy Now functionality not yet implemented.");
     }
 </script>
+
 @if(session('added_to_cart'))
 <script>
     const badge = document.getElementById('cartBadge');

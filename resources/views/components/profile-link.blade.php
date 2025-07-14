@@ -73,114 +73,102 @@
 <style>[x-cloak]{display:none!important;}</style>
 <body x-data="{ showLogoutModal: false }" class="font-poppins antialiased bg-[#F0F4F9] h-screen overflow-hidden">
   @php use Illuminate\Support\Facades\Auth; @endphp
+
   <div id="view" class="flex h-screen w-screen overflow-hidden">
     <aside class="w-[23rem] fixed transition transform ease-in-out duration-300 z-50 flex h-screen bg-[#56AB2F]">
-     <div class="text-white mt-16 flex-col space-y-2 w-full h-[calc(100vh)] px-4" x-data="{ open: {{ request()->routeIs('product.*') || request()->is('admin/ads*') ? 'true' : 'false' }} }">
-        <div id="profile" class="text-center space-y-2 mb-4">
-          <div class="pb-3">
-            <img src="{{ asset('images/logo2.png') }}" alt="User Avatar" class="w-[120px] md:w-[140px] lg:w-[180px] mx-auto rounded-full"/>
-          </div>
-          @auth
-            <h2 class="font-semibold text-xl lg:text-2xl">{{ Auth::user()->first_name }} {{ Auth::user()->last_name }}</h2>
-            <p class="text-base text-white/70">{{ Auth::user()->role === 'admin' ? 'Administrator' : ucfirst(Auth::user()->role) }}</p>
-          @endauth
-        </div>
-        <div id="menu" class="flex flex-col space-y-0.5 text-white mt-4 px-2">
-
-
-          
-  <x-side-link class="sidebar-link" href="{{ route('admin.dashboard') }}" :active="request()->routeIs('admin.dashboard')">
-    <img src="{{ asset('images/dashboard.png') }}" alt="Dashboard Icon" class="w-6 h-6 inline-block mr-3 ms-20">
-    Dashboard
-  </x-side-link>
-
-  <p class="text-white/70 font-semibold uppercase text-sm mt-4">Product Management</p>
-
-  <x-side-link class="sidebar-link" href="{{ route('product.index') }}" :active="request()->routeIs('product.*')">
-    <img src="{{ asset('images/product.png') }}" alt="Product Icon" class="w-6 h-6 inline-block mr-3 ms-20">
-    Products
-  </x-side-link>
-
-  <x-side-link class="sidebar-link no-ajax" href="{{ route('admin.ads') }}" :active="request()->is('admin/ads*')">
-    <img src="{{ asset('images/ads.png') }}" alt="Ads Icon" class="w-6 h-6 inline-block mr-3 ms-20">
-    Ads
-  </x-side-link>
-
-  <p class="text-white/70 font-semibold uppercase text-sm mt-4">User Management</p>
-
-  <x-side-link class="sidebar-link"  href="{{ route('admin.schools.index') }}" :active="request()->routeIs('admin.schools.*')">
-    <img src="{{ asset('images/school.png') }}" alt="School Icon" class="w-6 h-6 inline-block mr-3 ms-20">
-    Schools
-  </x-side-link>
-
-<x-side-link class="sidebar-link no-ajax" href="{{ route('admin.users.index') }}" :active="request()->routeIs('admin.users.index')">
-    <img src="{{ asset('images/user.png') }}" alt="User Icon" class="w-6 h-6 inline-block mr-3 ms-20">
-    Users
-</x-side-link>
-
-  <p class="text-white/70 font-semibold uppercase text-sm mt-4">Ecommerce</p>
-
-  <x-side-link class="sidebar-link" href="#" :active="request()->is('orders')">
-    <img src="{{ asset('images/order.png') }}" alt="Order Icon" class="w-6 h-6 inline-block mr-3 ms-20">
-    Orders
-  </x-side-link>
-
-  <x-side-link class="sidebar-link no-ajax"  href="#" :active="request()->is('payments')">
-    <img src="{{ asset('images/payment.png') }}" alt="Payment Icon" class="w-6 h-6 inline-block mr-3 ms-20">
-    Payments
-  </x-side-link>
-
-  <p class="text-white/70 font-semibold uppercase text-sm mt-4">Apps</p>
-
-  <x-side-link class="sidebar-link"  href="{{ route('admin.chat.index') }}" :active="request()->is('admin/chat*')">
-    <img src="{{ asset('images/chat.png') }}" alt="Chat Icon" class="w-6 h-6 inline-block mr-3 ms-20">
-    Message
-  </x-side-link>
-
-  <x-side-link class="sidebar-link" href="#" @click.prevent="showLogoutModal = true">
-    <img src="{{ asset('images/logout.png') }}" alt="Log Out Icon" class="w-6 h-6 inline-block mr-3 ms-20">
-    Logout
-  </x-side-link>
-
-</div>
-
+  <div class="text-white mt-16 flex-col space-y-2 w-full h-[calc(100vh)] px-4">
+    <div id="profile" class="text-center space-y-2 mb-4">
+      <div class="pb-3">
+        <img src="{{ asset('images/logo2.png') }}" alt="User Avatar" class="w-[120px] md:w-[140px] lg:w-[180px] mx-auto rounded-full"/>
       </div>
-      <div class="mini hidden mt-20 flex flex-col space-y-2 w-full h-[calc(100vh)]"></div>
-    </aside>
-      <main id="main-content" class="flex-1 ml-[23rem] h-screen overflow-y-auto bg-[#F0F4F9] p-6">
-          {{ $slot }}
-      </main>
+      @auth
+        <h2 class="font-semibold text-xl lg:text-2xl">{{ Auth::user()->first_name }} {{ Auth::user()->last_name }}</h2>
+        <p class="text-base text-white/70">{{ ucfirst(Auth::user()->role) }}</p>
+      @endauth
+    </div>
+
+    <nav class="space-y-1.5 pt-4 text-sm font-medium">
+      <p class="text-white/70 font-semibold uppercase text-sm mt-4">Dashboard</p>
+      <a href="{{ route('user.dashboard') }}"
+        class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.dashboard') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
+        <img src="{{ asset('images/dashboard.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Dashboard
+      </a>
+
+      <p class="text-white/70 font-semibold uppercase text-sm mt-4">Account</p>
+      <a href="{{ route('user.profile') }}"
+        class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.profile') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
+        <img src="{{ asset('images/user.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Profile Settings
+      </a>
+      
+      <a href="{{ route('user.users') }}"
+      class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.users') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
+      <img src="{{ asset('images/user.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Users
+    </a>
+
+
+      <p class="text-white/70 font-semibold uppercase text-sm mt-4">Orders</p>
+      <a href="{{ route('user.order-request') }}"
+        class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.order-request') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
+        <img src="{{ asset('images/request.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Order Request
+      </a>
+
+      <a href="{{ route('user.track-order') }}"
+        class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.track-order') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
+        <img src="{{ asset('images/track.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Track Order
+      </a>
+
+      <a href="{{ route('user.order-history') }}"
+        class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.order-history') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
+        <img src="{{ asset('images/history.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Order History
+      </a>
+
+      <p class="text-white/70 font-semibold uppercase text-sm mt-4">Apps</p>
+      <a href="{{ route('user.chat.full') }}"
+        class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.chat.full') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
+        <img src="{{ asset('images/chat.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Chat
+      </a>
+    </nav>
+
+    <a href="#" @click.prevent="showLogoutModal = true"
+  class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 bg-[#56AB2F]">
+  <img src="{{ asset('images/logout.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Log Out
+</a>
   </div>
-  <div x-show="showLogoutModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 overflow-y-auto">
+</aside>
+
+
+    <main id="main-content" class="flex-1 ml-[23rem] h-screen overflow-y-auto bg-[#F0F4F9] p-6">
+      {{ $slot }}
+    </main>
+  </div>
+
+  <!-- Logout Modal -->
+  <div x-show="showLogoutModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
     <div class="absolute inset-0" @click="showLogoutModal = false"></div>
-    <div @click.stop class="p-4 sm:p-10 bg-gray-50 rounded-md w-[300px] md:w-[500px] text-center relative">
+    <div @click.stop class="p-6 sm:p-10 bg-white rounded-md w-[300px] md:w-[500px] text-center relative">
       <span class="mb-4 inline-flex justify-center items-center w-[62px] h-[62px] rounded-full border-4 border-yellow-50 bg-yellow-100 text-yellow-500 mx-auto">
-        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-          <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"></path>
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
         </svg>
       </span>
       <h3 class="mb-2 text-2xl font-bold text-gray-800">Sign out</h3>
-      <p class="text-gray-500">Are you sure you would like to sign out of your account?</p>
+      <p class="text-gray-500">Are you sure you want to sign out?</p>
       <div class="mt-6 flex justify-center gap-x-4">
-        <form method="POST" action="{{ route('logout') }}" id="logoutForm">
+        <form method="POST" action="{{ route('logout') }}">
           @csrf
           <button type="submit"
-            class="py-2.5 px-4 inline-flex justify-center items-center gap-2 rounded-md border font-medium bg-white text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-blue-600 transition-all text-sm"
-            id="logoutBtn">
+            class="py-2.5 px-4 inline-flex justify-center items-center gap-2 rounded-md border font-medium bg-white text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 transition-all text-sm">
             Sign out
           </button>
         </form>
-
         <button @click="showLogoutModal = false" type="button"
-          class="py-2.5 px-4 inline-flex justify-center items-center gap-2 rounded-md border border-transparent font-semibold bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all text-sm">
+          class="py-2.5 px-4 inline-flex justify-center items-center gap-2 rounded-md bg-blue-500 text-white hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all text-sm">
           Cancel
         </button>
-
       </div>
     </div>
   </div>
-
-  <div id="loadingOverlay" class="hidden fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
+    <div id="loadingOverlay" class="hidden fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
     <div class="bg-white rounded-xl p-8 shadow-lg flex items-center space-x-5 animate-fadeIn">
       <svg class="animate-spin animate-bounceScale text-[#56AB2F]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -190,6 +178,7 @@
     </div>
   </div>
 
+</body>
   <script>
   document.addEventListener("DOMContentLoaded", () => {
     const logoutForm = document.querySelector('form[action="{{ route('logout') }}"]');

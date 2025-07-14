@@ -7,13 +7,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class School extends Model
 {
-    protected $fillable = [
+        protected $fillable = [
         'user_id',
         'school_name',
         'school_email',
         'address',
         'image',
+        'lat', 
+        'lng',
     ];
+
 
     public function user()
     {

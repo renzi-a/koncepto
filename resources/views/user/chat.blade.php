@@ -3,6 +3,7 @@
 <div class="max-w-7xl mx-auto mt-10 mb-10 bg-white p-8 shadow-xl rounded-2xl flex flex-col min-h-[80vh]">
 <div class="flex justify-between items-center mb-6">
     <h2 class="text-2xl font-bold">Chat</h2>
+    <span id="chatSource" class="text-sm text-gray-500 italic">Checking who you're chatting with...</span>
     <a href="{{ url()->previous() }}" class="text-blue-600 hover:underline text-sm flex items-center gap-1">
         Back
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -107,7 +108,7 @@ function scrollToBottom() {
 }
 
 function isAtBottom() {
-    const threshold = 80; // px from bottom to still consider as bottom
+    const threshold = 80; 
     return chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight < threshold;
 }
 
@@ -156,7 +157,6 @@ function renderMessages(messages) {
 }
 
 
-// Fetch new messages
 function fetchMessages() {
     fetch('{{ route("user.chat.messages") }}')
         .then(res => res.json())
@@ -185,11 +185,7 @@ function checkTyping() {
 }
 setInterval(checkTyping, 1500);
 </script>
-
-
-
 <script>
-// Send typing status to server
 const messageInput = document.getElementById('messageInput');
 
 messageInput.addEventListener('input', () => {
@@ -205,7 +201,6 @@ messageInput.addEventListener('input', () => {
 </script>
 
 <script>
-// Form submission (send message)
 const chatForm = document.getElementById('chatForm');
 
 chatForm.addEventListener('submit', function (e) {
@@ -234,7 +229,6 @@ chatForm.addEventListener('submit', function (e) {
 </script>
 
 <script>
-// Attachment preview
 const attachmentInput = document.getElementById('attachmentInput');
 const preview = document.getElementById('attachmentPreview');
 const previewImg = document.getElementById('previewImage');
@@ -267,6 +261,21 @@ function clearAttachment() {
     previewImg.src = '';
     previewFileName.textContent = '';
 }
+</script>
+<script>
+function checkChatSource() {
+    fetch("{{ route('user.chat.source') }}")
+        .then(res => res.json())
+        .then(data => {
+            const status = document.getElementById('chatSource');
+            status.textContent = data.source === 'admin'
+                ? "You're chatting with Admin"
+                : "You're chatting with Koncepto Bot";
+        });
+}
+
+setInterval(checkChatSource, 5000);
+checkChatSource();
 </script>
 
 <x-footer />

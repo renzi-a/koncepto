@@ -8,12 +8,14 @@ use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class AdminChatController extends Controller
 {
     public function index()
     {
         $adminId = Auth::id();
+
         $users = User::where('role', 'school_admin')
             ->with('school')
             ->get()
@@ -24,14 +26,14 @@ class AdminChatController extends Controller
                     ->count();
 
                 $lastMessage = Message::where(function ($q) use ($user, $adminId) {
-                        $q->where('sender_id', $user->id)
-                          ->where('receiver_id', $adminId);
-                    })->orWhere(function ($q) use ($user, $adminId) {
-                        $q->where('sender_id', $adminId)
-                          ->where('receiver_id', $user->id);
-                    })->latest()->first();
+                    $q->where('sender_id', $user->id)
+                        ->where('receiver_id', $adminId);
+                })->orWhere(function ($q) use ($user, $adminId) {
+                    $q->where('sender_id', $adminId)
+                        ->where('receiver_id', $user->id);
+                })->latest()->first();
 
-                $user->last_message = $lastMessage?->message;
+                $user->last_message = $lastMessage?->message ?? null;
 
                 return $user;
             });
@@ -49,20 +51,19 @@ class AdminChatController extends Controller
         $activeUser = User::findOrFail($userId);
 
         $messages = Message::where(function ($q) use ($adminId, $userId) {
-                $q->where('sender_id', $adminId)
-                  ->where('receiver_id', $userId);
-            })->orWhere(function ($q) use ($adminId, $userId) {
-                $q->where('sender_id', $userId)
-                  ->where('receiver_id', $adminId);
-            })
-            ->orderBy('created_at')
-            ->get();
+            $q->where('sender_id', $adminId)->where('receiver_id', $userId);
+        })->orWhere(function ($q) use ($adminId, $userId) {
+            $q->where('sender_id', $userId)->where('receiver_id', $adminId);
+        })
+        ->orderBy('created_at')
+        ->get();
 
         Message::where('sender_id', $userId)
             ->where('receiver_id', $adminId)
             ->where('is_read', false)
             ->update(['is_read' => true]);
 
+        // 🧠 Refresh the list of users with unread counts
         $users = $this->index()->getData()['users'];
 
         return view('admin.admin_chat', [
@@ -80,9 +81,7 @@ class AdminChatController extends Controller
         ]);
 
         if (!$request->message && !$request->hasFile('attachment')) {
-            return back()->withErrors([
-                'message' => 'Please enter a message or upload an attachment.',
-            ]);
+            return back()->withErrors(['message' => 'Please enter a message or upload an attachment.']);
         }
 
         $data = [
@@ -95,11 +94,9 @@ class AdminChatController extends Controller
         if ($request->hasFile('attachment')) {
             $file = $request->file('attachment');
             $path = $file->store('chat_attachments', 'public');
-
             $data['attachment'] = $path;
             $data['original_name'] = $file->getClientOriginalName();
         }
-
 
         Message::create($data);
 
@@ -112,11 +109,16 @@ class AdminChatController extends Controller
         return redirect()->route('admin.chat.show', $receiverId);
     }
 
-
     public function fetchMessages($userId)
     {
         $admin = Auth::user();
         $user = User::findOrFail($userId);
+
+        // Mark as read
+        Message::where('sender_id', $user->id)
+            ->where('receiver_id', $admin->id)
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
 
         $messages = Message::where(function ($q) use ($admin, $user) {
             $q->where('sender_id', $admin->id)->where('receiver_id', $user->id);
@@ -125,11 +127,14 @@ class AdminChatController extends Controller
         })
         ->with('sender')
         ->orderBy('created_at')
-        ->get(['id', 'sender_id', 'receiver_id', 'message', 'attachment', 'original_name', 'created_at']);
-
+        ->get([
+            'id', 'sender_id', 'receiver_id', 'message',
+            'attachment', 'original_name', 'created_at'
+        ]);
 
         return response()->json($messages);
     }
+
     public function typing(Request $request, $userId)
     {
         $adminId = Auth::id();
@@ -140,10 +145,9 @@ class AdminChatController extends Controller
 
     public function checkTyping($userId)
     {
-        $currentAdmin = auth::id();
-        $key = "typing_user_{$userId}_to_{$currentAdmin}";
+        $adminId = Auth::id();
+        $key = "typing_user_{$userId}_to_{$adminId}";
         $isTyping = Cache::has($key);
         return response()->json(['typing' => $isTyping]);
     }
-
 }
