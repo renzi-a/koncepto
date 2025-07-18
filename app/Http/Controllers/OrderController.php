@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Orders;
 use App\Models\CustomOrder;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
@@ -15,20 +16,24 @@ public function adminOrders(Request $request)
     $tab = $request->get('tab', 'all');
     $status = $request->get('status', 'All');
 
-    $normalOrders = Orders::with('user');
-    if ($status !== 'All') {
-        $normalOrders->where('status', $status);
+    $normalOrdersQuery = Orders::with('user.school');
+    if ($tab === 'orders' || $tab === 'all') {
+        if ($status !== 'All') {
+            $normalOrdersQuery->where('status', $status);
+        }
     }
-    $normalOrders = $normalOrders->latest()->get();
+    $normalOrders = $normalOrdersQuery->latest()->get();
     foreach ($normalOrders as $order) {
         $order->is_custom = false;
     }
 
-    $customOrders = CustomOrder::with('user')->withCount('items');
-    if ($status !== 'All') {
-        $customOrders->where('status', $status);
+    $customOrdersQuery = CustomOrder::with('user.school')->withCount('items');
+    if ($tab === 'custom' || $tab === 'all') {
+        if ($status !== 'All') {
+            $customOrdersQuery->where('status', $status);
+        }
     }
-    $customOrders = $customOrders->latest()->get();
+    $customOrders = $customOrdersQuery->latest()->get();
     foreach ($customOrders as $order) {
         $order->is_custom = true;
     }
@@ -38,11 +43,26 @@ public function adminOrders(Request $request)
     } elseif ($tab === 'custom') {
         $orders = $customOrders;
     } else {
-        $orders = $normalOrders->merge($customOrders)->sortByDesc('created_at');
+        $orders = $normalOrders->merge($customOrders)->sortByDesc('created_at')->values();
     }
 
-    return view('admin.orders', compact('orders', 'normalOrders', 'customOrders', 'tab', 'status'));
+    $normalOrdersCount = Orders::count();
+    $customOrdersCount = CustomOrder::count();
+    $allOrdersCount = $normalOrdersCount + $customOrdersCount;
+
+    return view('admin.orders', compact(
+        'orders',
+        'normalOrders',
+        'customOrders',
+        'tab',
+        'status',
+        'normalOrdersCount',
+        'customOrdersCount',
+        'allOrdersCount'
+    ));
 }
+
+
 
     public function fetchOrders(Request $request)
 {
@@ -100,4 +120,115 @@ public function adminOrders(Request $request)
 
         return response()->json(['success' => true, 'message' => 'Status updated successfully.']);
     }
+
+public function adminShow($id, Request $request)
+{
+    $search = $request->input('search');
+
+    $order = Orders::with('orderDetails.product')->findOrFail($id);
+
+    $allItems = $order->orderDetails->map(function ($detail) {
+        return [
+            'name' => $detail->product->name ?? 'Unknown',
+            'brand' => $detail->product->brand ?? 'N/A',
+            'unit' => $detail->product->unit ?? 'N/A',
+            'quantity' => $detail->quantity,
+            'description' => $detail->product->description ?? 'N/A',
+            'photo' => $detail->product->photo ?? null,
+        ];
+    });
+
+    if ($search) {
+        $filteredItems = $allItems->filter(function ($item) use ($search) {
+            return str_contains(strtolower($item['name']), strtolower($search));
+        });
+    } else {
+        $filteredItems = $allItems;
+    }
+
+    $items = $this->paginateCollection($filteredItems->values());
+
+    return view('admin.orders-show', compact('order', 'items', 'search'));
+}
+
+protected function paginateCollection($items, $perPage = 10)
+{
+    $page = request()->get('page', 1);
+    $offset = ($page - 1) * $perPage;
+
+    return new LengthAwarePaginator(
+        $items->slice($offset, $perPage),
+        $items->count(),
+        $perPage,
+        $page,
+        ['path' => request()->url(), 'query' => request()->query()]
+    );
+}
+
+public function adminCustomShow(Request $request, $id)
+{
+    $order = CustomOrder::with('user.school')->findOrFail($id);
+
+
+    $search = $request->input('search');
+    $items = collect($order->items ?? []);
+
+    if ($search) {
+        $searchLower = strtolower($search);
+        $items = $items->filter(function ($item) use ($searchLower) {
+            return str_contains(strtolower($item['name']), $searchLower) ||
+                   str_contains(strtolower($item['brand'] ?? ''), $searchLower) ||
+                   str_contains(strtolower($item['description'] ?? ''), $searchLower);
+        });
+    }
+
+    $perPage = 10;
+    $page = $request->input('page', 1);
+
+    $paginatedItems = new LengthAwarePaginator(
+        $items->forPage($page, $perPage)->values(),
+        $items->count(),
+        $perPage,
+        $page,
+        ['path' => $request->url(), 'query' => $request->query()]
+    );
+
+    return view('admin.custom-orders-show', [
+        'order' => $order,
+        'items' => $paginatedItems,
+        'search' => $search,
+    ]);
+}
+
+public function showQuotation($orderId, Request $request)
+{
+    $order = CustomOrder::with('items')->findOrFail($orderId);
+
+    return view('admin.quotation', compact('order'));
+}
+
+public function saveQuotationPrices(Request $request, $orderId)
+{
+    $order = CustomOrder::with('items')->findOrFail($orderId);
+
+    $data = $request->input('prices'); 
+
+    foreach ($order->items as $item) {
+        if (isset($data[$item->id])) {
+            $price = floatval($data[$item->id]);
+            $item->price = $price;
+            $item->total_price = $price * $item->quantity;
+            $item->save();
+        }
+    }
+
+    $total = $order->items->sum('total_price');
+    $order->status = 'quoted';
+    $order->save();
+
+    return redirect()->route('admin.custom-orders.show', $orderId)
+                     ->with('success', 'Prices saved and order status updated to quoted.');
+}
+
+
 }

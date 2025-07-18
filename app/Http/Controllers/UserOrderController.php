@@ -51,8 +51,19 @@ class UserOrderController extends Controller
 public function show(Request $request, Orders $order)
 {
     $search = $request->input('search');
-    
-    $allItems = collect($order->items ?? []);
+
+    $orderDetails = $order->orderDetails()->with('product')->get();
+    $allItems = $orderDetails->map(function ($detail) {
+        $product = $detail->product;
+        return [
+            'name' => $product->productName ?? 'N/A',
+            'brand' => $product->brandName ?? 'N/A',
+            'unit' => $product->unit ?? 'N/A',
+            'description' => $product->description ?? 'N/A',
+            'photo' => $product->image ?? null,
+            'quantity' => $detail->quantity,
+        ];
+    });
 
     if ($search) {
         $filteredItems = $allItems->filter(function ($item) use ($search) {
@@ -66,6 +77,7 @@ public function show(Request $request, Orders $order)
 
     return view('user.order.show', compact('order', 'items', 'search'));
 }
+
 
 public function cancel(Request $request, Orders $order)
 {
@@ -92,6 +104,12 @@ public function cancel(Request $request, Orders $order)
         ];
     });
 
+    foreach ($order->orderDetails as $detail) {
+        if ($detail->product) {
+            $detail->product->increment('quantity', $detail->quantity);
+        }
+    }
+
     OrderHistory::create([
         'original_order_id' => $order->id,
         'user_id' => $order->user_id,
@@ -104,7 +122,8 @@ public function cancel(Request $request, Orders $order)
     $order->orderDetails()->delete();  
     $order->delete();
 
-    return redirect()->route('user.order-history')->with('success', 'Order cancelled successfully.');
+    return redirect()->route('user.order-history')->with('success', 'Order cancelled and stock restored.');
 }
+
 
 }

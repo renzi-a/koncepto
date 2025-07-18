@@ -8,8 +8,8 @@ use App\Models\CustomOrderItem;
 use Illuminate\Support\Facades\Auth;
 use App\Models\OrderHistory;
 use Illuminate\Support\Facades\Storage;
-
-
+use App\Models\Payment;
+use Illuminate\Support\Facades\DB;
 
 class CustomOrderController extends Controller
 {
@@ -100,7 +100,6 @@ public function show(Request $request, CustomOrder $order)
     }
 
     $search = $request->input('search');
-
     $items = collect($order->items);
 
     if ($search) {
@@ -109,6 +108,14 @@ public function show(Request $request, CustomOrder $order)
                    stripos($item['brand'] ?? '', $search) !== false ||
                    stripos($item['description'] ?? '', $search) !== false;
         });
+    }
+
+    if (in_array($order->status, ['quoted', 'approved'])) {
+        return view('user.order.quoted', [
+            'order' => $order,
+            'items' => $items,
+            'search' => $search,
+        ]);
     }
 
     $perPage = 10;
@@ -127,6 +134,8 @@ public function show(Request $request, CustomOrder $order)
         'search' => $search,
     ]);
 }
+
+
 
 public function edit(CustomOrder $order)
 {
@@ -219,7 +228,72 @@ public function update(Request $request, CustomOrder $order)
     return redirect()->route('user.order.index')->with('success', 'Order updated successfully.');
 }
 
+public function quotedOrders()
+{
+    $orders = CustomOrder::where('user_id', Auth::id())
+        ->where('status', 'quoted')
+        ->with('items')
+        ->latest()
+        ->get();
 
+    return view('user.order.quoted', compact('orders'));
+}
+
+public function showQuotedOrder($id)
+{
+    $order = CustomOrder::where('user_id', Auth::id())
+        ->where('status', 'quoted')
+        ->with('items')
+        ->findOrFail($id);
+
+    return view('user.order.quoted-show', compact('order'));
+}
+
+public function downloadQuotedOrderPdf($id)
+{
+    $order = CustomOrder::where('user_id', Auth::id())
+        ->where('status', 'quoted')
+        ->with('items')
+        ->findOrFail($id);
+
+   $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('user.order.quoted-pdf', compact('order'));
+
+    return $pdf->download("CustomOrder-{$order->id}-Quotation.pdf");
+}
+
+public function approve(Request $request, $id)
+{
+    $request->validate([
+        'payment_date' => [
+            'required',
+            'date',
+            'after_or_equal:today',
+            function ($attribute, $value, $fail) {
+                $maxDate = \Carbon\Carbon::now()->addMonthNoOverflow()->endOfMonth();
+                if (\Carbon\Carbon::parse($value)->gt($maxDate)) {
+                    $fail('The payment date must be within today and the end of next month.');
+                }
+            }
+        ],
+    ]);
+
+    $order = CustomOrder::where('user_id', Auth::id())
+        ->where('status', 'quoted')
+        ->findOrFail($id);
+
+    DB::transaction(function () use ($order, $request) {
+    $order->status = 'approved';
+    $order->save();
+
+    Payment::create([
+        'order_id' => $order->id,
+        'order_type' => 'custom_order',
+        'payment_date' => $request->payment_date,
+    ]);
+});
+
+    return redirect()->route('user.order.index')->with('success', 'Order approved successfully.');
+}
 
 
 }

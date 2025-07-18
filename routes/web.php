@@ -32,13 +32,22 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::middleware(['auth', IsAdmin::class])->group(function () {
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.dashboard');
     Route::get('/admin/ads', [AdsController::class, 'index'])->name('admin.ads');
+
+
     Route::get('/admin/orders', [OrderController::class, 'adminOrders'])->name('admin.orders');
     Route::get('/admin/orders/{id}', [OrderController::class, 'show'])->name('admin.orders.show');
     Route::get('/admin/orders/ajax', [OrderController::class, 'fetchOrders'])->name('admin.orders.ajax');
     Route::post('/admin/orders/update-status', [OrderController::class, 'updateOrderStatus'])->name('admin.orders.updateStatus');
+    Route::get('/admin/orders/{order}', [OrderController::class, 'adminShow'])
+        ->name('admin.orders.show');
+    Route::get('/admin/custom-orders/{customOrder}', [OrderController::class, 'adminCustomShow'])
+        ->name('admin.custom-orders.show');
+    Route::get('/admin/custom-orders/{id}/quotation', [OrderController::class, 'showQuotation'])
+        ->name('admin.custom-orders.quotation');
+    Route::post('/admin/custom-orders/{id}/quotation', [OrderController::class, 'saveQuotationPrices'])
+        ->name('admin.custom-orders.quotation.save');
 
     Route::get('/admin/payment', [PaymentController::class, 'index'])->name('admin.payment');
-
 
     // Chat
     Route::prefix('admin/chat')->middleware(['auth'])->group(function () {
@@ -140,6 +149,12 @@ Route::middleware(['auth', IsUser::class])->group(function () {
     Route::get('/user/custom-orders/{order}', [CustomOrderController::class, 'show'])->name('user.custom-orders.show'); 
     Route::get('user/custom-orders/{order}/edit', [CustomOrderController::class, 'edit'])->name('custom-orders.edit');
     Route::put('/custom-orders/{order}', [CustomOrderController::class, 'update'])->name('custom-orders.update');
+    Route::get('/orders/quoted', [CustomOrderController::class, 'quotedOrders'])->name('user.order.quoted');
+    Route::get('/orders/quoted/{id}', [CustomOrderController::class, 'showQuotedOrder'])->name('user.order.quoted.show');
+    Route::get('/orders/quoted/{id}/pdf', [CustomOrderController::class, 'downloadQuotedOrderPdf'])->name('user.order.quoted.pdf');
+    Route::put('/user/custom-orders/{id}/approve', [CustomOrderController::class, 'approve'])
+    ->name('user.custom-orders.approve');
+
 });
 
 

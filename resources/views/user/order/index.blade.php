@@ -16,7 +16,6 @@
             </a>
         </div>
 
-        {{-- Normal Orders --}}
         @foreach ($normalOrders as $order)
             <div class="bg-blue-50 border-l-4 border-blue-400 rounded-xl shadow p-4 mb-4">
                 <div class="flex justify-between items-stretch mb-2">
@@ -57,7 +56,6 @@
             </div>
         @endforeach
 
-        {{-- Custom Orders --}}
         @foreach ($customOrders as $order)
             <div class="bg-yellow-50 border-l-4 border-yellow-400 rounded-xl shadow p-4 mb-4">
                 <div class="flex justify-between items-stretch mb-2">
@@ -86,7 +84,7 @@
                                 </a>
                             @endif
                             
-                            @if (!in_array($order->status, ['gathering', 'to be delivered', 'delivered']))
+                            @if (in_array($order->status, ['to be quoted', 'quoted']))
                                 <button 
                                     @click="cancelOrderId = {{ $order->id }}; cancelOrderType = 'custom'; reasonText = ''; showCancelModal = true"
                                     class="text-red-600 hover:underline"
@@ -107,7 +105,6 @@
             </div>
         @endforeach
 
-        {{-- Cancel Modal --}}
         <div 
             x-show="showCancelModal" 
             class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"

@@ -25,5 +25,9 @@ class OrderHistory extends Model
 {
     return $this->belongsTo(\App\Models\CustomOrder::class, 'custom_order_id');
 }
+public function orderDetails()
+{
+    return $this->hasMany(OrderDetail::class);
+}
 
 }

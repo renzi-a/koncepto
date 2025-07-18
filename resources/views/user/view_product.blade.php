@@ -2,14 +2,12 @@
 <div class="bg-gray-100 py-10">
     <div class="max-w-6xl mx-auto bg-white p-6 rounded-xl shadow-md">
         <div class="flex flex-col lg:flex-row gap-10">
-            <!-- Product Image -->
             <div class="w-full lg:w-1/2">
                 <img src="{{ asset('storage/' . $product->image) }}"
                      alt="{{ $product->productName }}"
                      class="w-full aspect-square object-cover rounded-lg border">
             </div>
 
-            <!-- Product Details -->
             <div class="w-full lg:w-1/2 flex flex-col justify-between">
                 <div class="space-y-4">
                     <a href="{{ route('user.home') }}" class="text-[#56AB2F] hover:underline font-medium mb-2 block">← Back to Products</a>
@@ -26,7 +24,6 @@
                         </p>
                     </div>
 
-                    <!-- Quantity Input -->
                     <div class="mt-4">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Quantity:</label>
                         <div class="flex items-center gap-2">

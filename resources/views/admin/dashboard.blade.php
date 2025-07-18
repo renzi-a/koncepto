@@ -53,52 +53,54 @@
     </form>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex justify-between items-center text-sm text-gray-500">
-                <span>Revenue</span>
-                <span class="{{ $revenueChange >= 0 ? 'text-green-600' : 'text-red-600' }} font-semibold text-xs">
-                    {{ $revenueChange >= 0 ? '+' : '' }}{{ $revenueChange ?? '0.00' }}%
-                </span>
-            </div>
-            <div class="text-3xl font-bold mt-2 text-gray-800">
-                ₱{{ number_format($totalRevenue ?? 0, 2) }}
-            </div>
-        </div>
+<div class="bg-white rounded-lg shadow p-6">
+    <div class="flex justify-between items-center text-sm text-gray-500">
+        <span>Revenue</span>
+        <span class="{{ $revenueChange >= 0 ? 'text-green-600' : 'text-red-600' }} font-semibold text-xs">
+            {{ $revenueChange >= 0 ? '+' : '' }}{{ $revenueChange ?? '0.00' }}%
+        </span>
+    </div>
+    <div class="text-3xl font-bold mt-2 text-gray-800">
+        ₱{{ number_format($totalRevenue ?? 0, 2) }}
+    </div>
+</div>
 
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex justify-between items-center text-sm text-gray-500">
-                <span>Pending Orders</span>
-                <span class="{{ $pendingChange >= 0 ? 'text-red-600' : 'text-green-600' }} font-semibold text-xs">
-                    {{ $pendingChange >= 0 ? '+' : '' }}{{ $pendingChange ?? '0.00' }}%
-                </span>
-            </div>
-            <div class="text-3xl font-bold mt-2 text-yellow-500">
-                {{ $pendingOrders ?? 0 }}
-            </div>
-        </div>
+<div class="bg-white rounded-lg shadow p-6">
+    <div class="flex justify-between items-center text-sm text-gray-500">
+        <span>Pending Orders</span>
+        <span class="{{ $pendingChange >= 0 ? 'text-red-600' : 'text-green-600' }} font-semibold text-xs">
+            {{ $pendingChange >= 0 ? '+' : '' }}{{ $pendingChange ?? '0.00' }}%
+        </span>
+    </div>
+    <div class="text-3xl font-bold mt-2 text-yellow-500">
+        {{ ($pendingOrders ?? 0) + ($customPending ?? 0) }}
+    </div>
+</div>
 
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex justify-between items-center text-sm text-gray-500">
-                <span>Completed Orders</span>
-                <span class="{{ $completedChange >= 0 ? 'text-green-600' : 'text-red-600' }} font-semibold text-xs">
-                    {{ $completedChange >= 0 ? '+' : '' }}{{ $completedChange ?? '0.00' }}%
-                </span>
-            </div>
-            <div class="text-3xl font-bold mt-2 text-green-600">
-                {{ $completedOrders ?? 0 }}
-            </div>
-        </div>
+<div class="bg-white rounded-lg shadow p-6">
+    <div class="flex justify-between items-center text-sm text-gray-500">
+        <span>Completed Orders</span>
+        <span class="{{ $completedChange >= 0 ? 'text-green-600' : 'text-red-600' }} font-semibold text-xs">
+            {{ $completedChange >= 0 ? '+' : '' }}{{ $completedChange ?? '0.00' }}%
+        </span>
+    </div>
+    <div class="text-3xl font-bold mt-2 text-green-600">
+        {{ ($completedOrders ?? 0) + ($customCompleted ?? 0) }}
+    </div>
+</div>
+
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-white rounded-lg shadow p-6">
             <h2 class="text-xl font-semibold text-gray-700 mb-4">Sales Trend</h2>
-            <canvas id="salesTrendChart" class="w-full h-[400px]"></canvas>
+            <canvas id="salesTrendChart" class="w-full max-h-72"></canvas>
+
         </div>
 
         <div class="bg-white rounded-lg shadow p-6">
             <h2 class="text-xl font-semibold text-gray-700 mb-4">Top 10 Products</h2>
-            <canvas id="topProductsChart" class="w-full h-[400px]"></canvas>
+            <canvas id="topProductsChart" class="w-full max-h-72 mt-6"></canvas>
         </div>
     </div>
 
@@ -143,15 +145,16 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize Leaflet Map
     const mapEl = document.getElementById('nasugbuMap');
     if (mapEl) {
-        const map = L.map('nasugbuMap').setView([14.0940, 120.6890], 13);
+        const map = L.map(mapEl).setView([14.0940, 120.6890], 13);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        const schools = @json($salesBySchool);
+        const schools = @json($schoolSales);
         schools.forEach(school => {
             if (!school.lat || !school.lng) return;
 
@@ -182,11 +185,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Chart Initialization (SALES & TOP PRODUCTS)
     const salesLabels = @json($salesTrendLabels);
     const salesData = @json($salesTrendData);
-    const salesCtx = document.getElementById('salesTrendChart');
+    const topLabels = @json($topProductsLabels);
+    const topData = @json($topProductsData);
 
-    if (salesCtx && salesLabels.length && salesData.length) {
+    const salesCtx = document.getElementById('salesTrendChart')?.getContext('2d');
+    const topCtx = document.getElementById('topProductsChart')?.getContext('2d');
+
+    if (salesCtx && salesLabels?.length && salesData?.length) {
         new Chart(salesCtx, {
             type: 'line',
             data: {
@@ -196,8 +204,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     data: salesData,
                     borderColor: '#3B82F6',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    fill: true,
-                    tension: 0.4
+                    tension: 0.4,
+                    fill: true
                 }]
             },
             options: {
@@ -207,11 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const topLabels = @json($topProductsLabels);
-    const topData = @json($topProductsData);
-    const topCtx = document.getElementById('topProductsChart');
-
-    if (topCtx && topLabels.length && topData.length) {
+    if (topCtx && topLabels?.length && topData?.length) {
         new Chart(topCtx, {
             type: 'bar',
             data: {
@@ -224,27 +228,13 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false
+                maintainAspectRatio: false,
+                indexAxis: 'y'
             }
         });
     }
+
+    const reloadBtn = document.getElementById('reloadDashboardBtn');
+    reloadBtn?.addEventListener('click', () => window.location.reload());
 });
 </script>
-
-<script>
-document.getElementById('reloadDashboardBtn')?.addEventListener('click', () => {
-    location.reload();
-});
-</script>
-
-<script>
-    window.addEventListener('DOMContentLoaded', () => {
-        const reloadBtn = document.getElementById('reloadDashboardBtn');
-        if (reloadBtn) {
-            reloadBtn.addEventListener('click', () => {
-                window.location.reload();
-            });
-        }
-    });
-</script>
-

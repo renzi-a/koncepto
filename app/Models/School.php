@@ -26,6 +26,19 @@ class School extends Model
     {
         return $this->hasMany(Orders::class);
     }
+
+    public function customOrder()
+{
+    return $this->hasManyThrough(
+        \App\Models\CustomOrder::class,
+        \App\Models\User::class,
+        'school_id',
+        'user_id',
+        'id',
+        'id'
+    );
+}
+
     public function users()
     {
         return $this->hasMany(User::class, 'school_id');
@@ -45,6 +58,7 @@ class School extends Model
     {
         return $this->hasMany(User::class, 'school_id')->where('role', 'student');
     }
+
 
 }
 

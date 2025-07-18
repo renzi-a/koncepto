@@ -21,6 +21,10 @@ class CustomOrderItem extends Model
         'total_price',
     ];
 
+    public function customOrder()
+{
+    return $this->belongsTo(CustomOrder::class);
+}
 
     public function order()
     {
