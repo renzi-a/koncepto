@@ -3,15 +3,20 @@
 use App\Http\Controllers\SchoolController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\OrderHistoryController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\AdminChatController;
+use App\Http\Controllers\CustomOrderController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AdsController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\UserOrderController;
 use App\Models\Notification;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Middleware\IsAdmin;
@@ -27,6 +32,12 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::middleware(['auth', IsAdmin::class])->group(function () {
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.dashboard');
     Route::get('/admin/ads', [AdsController::class, 'index'])->name('admin.ads');
+    Route::get('/admin/orders', [OrderController::class, 'adminOrders'])->name('admin.orders');
+    Route::get('/admin/orders/{id}', [OrderController::class, 'show'])->name('admin.orders.show');
+    Route::get('/admin/orders/ajax', [OrderController::class, 'fetchOrders'])->name('admin.orders.ajax');
+    Route::post('/admin/orders/update-status', [OrderController::class, 'updateOrderStatus'])->name('admin.orders.updateStatus');
+
+    Route::get('/admin/payment', [PaymentController::class, 'index'])->name('admin.payment');
 
 
     // Chat
@@ -77,19 +88,27 @@ Route::middleware(['auth', IsAdmin::class])->group(function () {
 
 // USER
 Route::middleware(['auth', IsUser::class])->group(function () {
-    Route::get('/user/home2', [UserController::class, 'index'])->name('user.home');
+    // Dashboard & Profile
+    Route::get('/user/dashboard', [UserController::class, 'dashboard'])->name('user.dashboard');
+    Route::get('/user/profile', [UserController::class, 'profile'])->name('user.profile');
+    Route::put('/user/profile', [UserController::class, 'updateProfile'])->name('user.profile.update');
+    Route::get('/user/users', [UserController::class, 'users'])->name('user.users');
+
+    // Product
+    Route::get('/user/home', [UserController::class, 'index'])->name('user.home');
     Route::get('/user/view_product/{product}', [UserController::class, 'viewProduct'])->name('view_product');
+
+    // Notifications
     Route::get('/notifications', [UserController::class, 'showNotifications'])->name('notifications');
     Route::post('/notifications/clear', [UserController::class, 'clearNotifications'])->name('notifications.clear');
-    Route::post('/notifications/mark-read', [UserController::class, 'markAsRead'])
-        ->middleware('auth')
-        ->name('notifications.markRead');
+    Route::post('/notifications/mark-read', [UserController::class, 'markAsRead'])->name('notifications.markRead');
 
-    // Cart
+    // Cart & Checkout
     Route::get('/user/cart', [CartController::class, 'index'])->name('cart.index');
     Route::post('/cart/update', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
-    Route::get('/user/checkout', [CartController::class, 'checkout'])->name('checkout');
+    Route::get('/checkout', [CartController::class, 'form'])->name('checkout.show');
+    Route::post('/checkout', [CartController::class, 'process'])->name('checkout.process');
 
     // Chat
     Route::get('/user/chat-popup', [ChatController::class, 'popup'])->name('user.chat.popup');
@@ -99,17 +118,28 @@ Route::middleware(['auth', IsUser::class])->group(function () {
     Route::post('/user/chat/typing', [ChatController::class, 'typing'])->name('user.chat.typing');
     Route::get('/user/chat/typing-check', [ChatController::class, 'checkTyping'])->name('user.chat.checkTyping');
     Route::get('/chat/source', [ChatController::class, 'getChatSource'])->name('user.chat.source');
-    
-    Route::get('/user/dashboard', [UserController::class, 'dashboard'])->name('user.dashboard');
-    Route::get('/user/profile', [UserController::class, 'profile'])->name('user.profile');
-    Route::get('/user/order-request', [UserController::class, 'orderRequest'])->name('user.order-request');
-    Route::get('/user/track-order', [UserController::class, 'trackOrder'])->name('user.track-order');
-    Route::get('/user/order-history', [UserController::class, 'orderHistory'])->name('user.order-history');
-    Route::get('/user/users', [UserController::class, 'users'])->name('user.users');
 
+    // ORDER SECTION
+    Route::get('/user/order', [UserOrderController::class, 'index'])->name('user.order.index');
+    Route::get('/user/order/{id}', [UserOrderController::class, 'show'])->name('user.order.show');
+    Route::get('/user/order-request', [UserOrderController::class, 'orderRequest'])->name('user.order-request');
+    Route::get('/user/track-order', [UserOrderController::class, 'trackOrder'])->name('user.track-order');
+    Route::get('/user/normal-orders/{order}', [UserOrderController::class, 'show'])->name('user.normal-orders.show');
+    Route::post('/user/normal-orders/{order}/cancel', [UserOrderController::class, 'cancel'])->name('user.normal-orders.cancel');
+
+    // ORDER HISTORY
+    Route::get('/user/order-history', [OrderHistoryController::class, 'index'])->name('user.order-history');
+    Route::get('/user/order-history/{id}', [OrderHistoryController::class, 'show'])->name('user.order-history-show');
+    Route::delete('/orders/bulk-delete', [OrderHistoryController::class, 'bulkDelete'])->name('user.orders.bulkDelete');
+    Route::delete('/orders/{id}', [OrderHistoryController::class, 'destroy'])->name('user.orders.destroy');
+
+    // CUSTOM ORDER
+    Route::get('/user/custom-order', [CustomOrderController::class, 'index'])->name('user.custom-order');
+    Route::post('/custom-orders', [CustomOrderController::class, 'store'])->name('custom-orders.store');
+    Route::post('user/custom-orders/{order}/cancel', [CustomOrderController::class, 'cancel'])->name('custom-orders.cancel');
+    Route::get('/user/custom-orders/{order}', [CustomOrderController::class, 'show'])->name('user.custom-orders.show'); 
+    Route::get('user/custom-orders/{order}/edit', [CustomOrderController::class, 'edit'])->name('custom-orders.edit');
+    Route::put('/custom-orders/{order}', [CustomOrderController::class, 'update'])->name('custom-orders.update');
 });
-
-
-
 
 

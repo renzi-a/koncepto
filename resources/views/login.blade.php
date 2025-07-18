@@ -29,14 +29,13 @@
       animation: bounceScale 1.2s ease-in-out infinite;
     }
 
-    /* Spinner size increased */
     #loadingOverlay svg {
       width: 48px;
       height: 48px;
     }
 
     #loadingOverlay span {
-      font-size: 1.25rem; /* bigger text */
+      font-size: 1.25rem; 
     }
   </style>
 </head>

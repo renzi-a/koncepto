@@ -26,7 +26,7 @@
                         </form>
 
                         <div class="pt-3">
-                            <a href="/custom-order" class="w-full block text-center bg-[#56AB2F] text-white font-semibold py-2 rounded-lg shadow hover:bg-green-700 transition">
+                            <a href="{{ route('user.custom-order') }}" class="w-full block text-center bg-[#56AB2F] text-white font-semibold py-2 rounded-lg shadow hover:bg-green-700 transition">
                                 Custom Order
                             </a>
                         </div>
@@ -57,15 +57,4 @@
                 </div>
             </div>
         </div>
-
-            <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button type="submit"
-                class="flex items-center space-x-4 text-lg px-4 py-3 rounded-md transition hover:bg-white hover:text-[#56AB2F] w-full text-left">
-                <svg class="w-6 h-6 inline-block mr-3" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59z"/>
-                </svg>
-                <span>Log Out</span>
-            </button>
-             </form>
     <x-footer/>

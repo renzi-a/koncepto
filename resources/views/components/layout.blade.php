@@ -89,7 +89,7 @@
 
 
           
-  <x-side-link class="sidebar-link" href="{{ route('admin.dashboard') }}" :active="request()->routeIs('admin.dashboard')">
+  <x-side-link class="sidebar-link no-ajax" href="{{ route('admin.dashboard') }}" :active="request()->routeIs('admin.dashboard')">
     <img src="{{ asset('images/dashboard.png') }}" alt="Dashboard Icon" class="w-6 h-6 inline-block mr-3 ms-20">
     Dashboard
   </x-side-link>
@@ -101,7 +101,7 @@
     Products
   </x-side-link>
 
-  <x-side-link class="sidebar-link no-ajax" href="{{ route('admin.ads') }}" :active="request()->is('admin/ads*')">
+  <x-side-link class="sidebar-link" href="{{ route('admin.ads') }}" :active="request()->is('admin/ads*')">
     <img src="{{ asset('images/ads.png') }}" alt="Ads Icon" class="w-6 h-6 inline-block mr-3 ms-20">
     Ads
   </x-side-link>
@@ -120,12 +120,12 @@
 
   <p class="text-white/70 font-semibold uppercase text-sm mt-4">Ecommerce</p>
 
-  <x-side-link class="sidebar-link" href="#" :active="request()->is('orders')">
+  <x-side-link class="sidebar-link no-ajax" href="{{ route('admin.orders') }}" :active="request()->is('orders')">
     <img src="{{ asset('images/order.png') }}" alt="Order Icon" class="w-6 h-6 inline-block mr-3 ms-20">
     Orders
   </x-side-link>
 
-  <x-side-link class="sidebar-link no-ajax"  href="#" :active="request()->is('payments')">
+  <x-side-link class="sidebar-link"  href="{{ route('admin.payment') }}" :active="request()->is('payments')">
     <img src="{{ asset('images/payment.png') }}" alt="Payment Icon" class="w-6 h-6 inline-block mr-3 ms-20">
     Payments
   </x-side-link>

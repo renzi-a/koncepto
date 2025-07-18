@@ -11,4 +11,8 @@ class AdsController extends Controller
         return view('admin.ads');
     }
 
+    public function create()
+    {
+        return view('admin.ads-create');
+    }
 }

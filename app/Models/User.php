@@ -9,8 +9,6 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
-
-// app/Models/User.php
     protected $fillable = [
         'first_name',
         'last_name',

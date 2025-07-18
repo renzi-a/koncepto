@@ -31,7 +31,6 @@
         </ul>
     </div>
 
-    {{-- ADMIN TAB --}}
     <div id="admin" class="tab-content">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-2xl font-bold text-gray-800">School Administrator</h2>
@@ -72,10 +71,13 @@
         @endif
     </div>
 
-    {{-- TEACHERS TAB --}}
     <div id="teachers" class="tab-content hidden">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-2xl font-bold text-gray-800">Teachers</h2>
+            <a href="{{ route('admin.users.create', $school->id) }}"
+               class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
+                Add User
+            </a>
         </div>
 
         @php $teachers = $school->users->where('role', 'teacher'); @endphp
@@ -117,6 +119,10 @@
     <div id="students" class="tab-content hidden">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-2xl font-bold text-gray-800">Students</h2>
+            <a href="{{ route('admin.users.create', $school->id) }}"
+               class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
+                Add User
+            </a>
         </div>
 
         @php $students = $school->users->where('role', 'student'); @endphp
@@ -143,7 +149,7 @@
                             </a>
                             <form action="" method="POST" onsubmit="return confirm('Delete this user?');">
                                 @csrf
-                                @method('DELETE')
+                                @method('DELETE')1
                                 <button type="submit" class="hover:scale-110 transition">
                                     <img src="{{ asset('images/icons/delete.png') }}" alt="Delete" class="w-5 h-5">
                                 </button>

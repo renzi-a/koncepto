@@ -22,13 +22,17 @@ return new class extends Migration {
 
         Schema::create('schools', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('user_id')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
             $table->string('school_name');
             $table->string('school_email');
             $table->string('address');
             $table->string('image')->nullable();
             $table->timestamps();
         });
+
 
         Schema::table('users', function (Blueprint $table) {
             $table->foreignId('school_id')->nullable()->constrained()->onDelete('cascade');
@@ -58,6 +62,10 @@ return new class extends Migration {
         Schema::table('users', function (Blueprint $table) {
             $table->dropForeign(['school_id']);
             $table->dropColumn('school_id');
+        });
+
+        Schema::table('schools', function (Blueprint $table) {
+            $table->dropForeign(['user_id']);
         });
 
         Schema::dropIfExists('schools');

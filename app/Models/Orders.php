@@ -27,8 +27,23 @@ class Orders extends Model
         return $this->belongsTo(School::class);
     }
 
-    public function orderDetails()
+public function orderDetails()
+{
+    return $this->hasMany(OrderDetail::class, 'order_id');
+}
+
+
+    public function customOrder()
     {
-        return $this->hasMany(OrderDetail::class);
+        return $this->hasOne(CustomOrder::class, 'id', 'custom_order_id');
     }
+    public function items()
+{
+    return $this->hasMany(OrderDetail::class, 'order_id');
+}
+public function payment()
+{
+    return $this->morphOne(Payment::class, 'order');
+}
+
 }

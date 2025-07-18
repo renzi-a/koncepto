@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CustomOrder;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Category;
@@ -10,6 +11,8 @@ use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -39,7 +42,7 @@ class UserController extends Controller
             $isAdminActive = Cache::has("typing_admin_{$admin->id}");
         }
 
-        return view('user.home2', compact('products', 'categories', 'messages', 'admin', 'isAdminActive'));
+        return view('user.home', compact('products', 'categories', 'messages', 'admin', 'isAdminActive'));
     }
 
     public function viewProduct($id)
@@ -78,33 +81,114 @@ class UserController extends Controller
 
     public function dashboard()
     {
-        return view('user.dashboard');
+        $school = Auth::user()->school;
+
+        $totalOrders = $school ? $school->orders()->count() : 0;
+        $pendingOrders = $school ? $school->orders()->where('status', 'pending')->count() : 0;
+        $deliveredOrders = $school ? $school->orders()->where('status', 'delivered')->count() : 0;
+
+        $recentOrders = $school ? $school->orders()->latest()->take(5)->get() : collect();
+
+        $salesLabels = ['Jan', 'Feb', 'Mar', 'Apr'];
+        $salesData = $school ? [
+            $school->orders()->whereMonth('created_at', 1)->count(),
+            $school->orders()->whereMonth('created_at', 2)->count(),
+            $school->orders()->whereMonth('created_at', 3)->count(),
+            $school->orders()->whereMonth('created_at', 4)->count(),
+        ] : [0, 0, 0, 0];
+
+        $recentDeliveries = $school ? $school->deliveries()->whereNotNull('lat')->whereNotNull('lng')->latest()->take(5)->get() : collect();
+
+        return view('user.dashboard', compact(
+            'totalOrders',
+            'pendingOrders',
+            'deliveredOrders',
+            'recentOrders',
+            'salesLabels',
+            'salesData',
+            'recentDeliveries'
+        ));
     }
+
 
     public function profile()
     {
         return view('user.profile');
     }
 
-    public function orderRequest()
+
+
+    public function updateProfile(Request $request)
     {
-        return view('user.order-request');
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
+            'phone' => 'nullable|string|max:20',
+            'current_password' => 'nullable|required_with:new_password',
+            'new_password' => 'nullable|string|min:8|confirmed',
+        ]);
+
+        $user->first_name = $validated['first_name'];
+        $user->last_name = $validated['last_name'];
+        $user->email = $validated['email'];
+        $user->cp_no = $request->input('phone', '');
+
+        if (!empty($validated['new_password'])) {
+            if (!Hash::check($request->current_password, $user->password)) {
+                return back()->withErrors(['current_password' => 'Current password is incorrect.']);
+            }
+
+            $user->password = Hash::make($validated['new_password']);
+        }
+
+        $user->save();
+
+        return back()->with('success', 'Profile updated successfully.');
     }
 
-    public function trackOrder()
-    {
-        return view('user.track-order');
-    }
-
-    public function orderHistory()
-    {
-        return view('user.order-history');
-    }
-
-    public function users()
+public function users(Request $request)
 {
-    $users = User::where('role', '!=', 'admin')->get(); // Or filter as needed
-    return view('user.users', compact('users'));
+    $school = Auth::user()->school;
+
+    if (!$school) {
+        abort(403, 'No school associated with this user.');
+    }
+
+    $query = User::where('school_id', $school->id)
+        ->where('role', '!=', 'admin');
+
+    if ($request->filled('search')) {
+        $search = $request->input('search');
+        $query->where(function ($q) use ($search) {
+            $q->where('first_name', 'like', "%$search%")
+              ->orWhere('last_name', 'like', "%$search%")
+              ->orWhere('email', 'like', "%$search%");
+        });
+    }
+
+    if ($request->filled('role')) {
+        $query->where('role', $request->role);
+    }
+
+    $users = $query->latest()->paginate(10);
+
+    if ($request->ajax()) {
+        $html = view('components.user_table', compact('users'))->render();
+        return response()->json(['html' => $html]);
+    }
+
+    return view('user.users', compact('users', 'school'));
+}
+
+public function showCustomOrder(CustomOrder $order)
+{
+    $this->authorize('view', $order); 
+    $order->load('items');
+    return view('user.custom-order-detail', compact('order'));
 }
 
 }

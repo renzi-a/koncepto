@@ -58,39 +58,48 @@
 
         <div id="cartContent">
         @if($hasItems)
-            <div class="space-y-6" id="cartItemsContainer">
-                @foreach($cartItems as $item)
-                <div class="flex items-center gap-6 border-b pb-4">
-                    <img src="{{ asset('storage/' . $item->product->image) }}" alt="{{ $item->product->productName }}" class="w-24 h-24 object-cover rounded">
-                    <div class="flex-1">
-                        <h3 class="font-semibold text-lg text-gray-800">{{ $item->product->productName }}</h3>
-                        <p class="text-sm text-gray-500">{{ $item->product->brandName }}</p>
-                        <p class="text-[#56AB2F] font-semibold mt-1">₱{{ number_format($item->product->price, 2) }}</p>
-                    </div>
-                    <div class="flex items-center gap-2 justify-center text-center">
-                        <input type="hidden" id="product-{{ $item->id }}" value="{{ $item->product_id }}">
-                        <button type="button" onclick="updateQty({{ $item->id }}, -1)" class="px-2 py-1 bg-gray-200 rounded">−</button>
-                        <input 
-                            type="number"
-                            id="qty-{{ $item->id }}"
-                            value="{{ $item->quantity }}"
-                            min="1"
-                            max="{{ $item->product->quantity }}"
-                            data-max="{{ $item->product->quantity }}"
-                            data-price="{{ $item->product->price }}"
-                            class="w-14 text-center border rounded" />
-                        <button type="button" onclick="updateQty({{ $item->id }}, 1)" class="px-2 py-1 bg-gray-200 rounded">+</button>
-                    </div>
-                    <form onsubmit="deleteCartItem(event, {{ $item->id }})" id="delete-form-{{ $item->id }}">
-                        @csrf
-                        @method('DELETE')
-                        <button onclick="openDeleteModal({{ $item->id }})" type="button" class="ml-4" title="Remove item">
-                            <img src="{{ asset('images/icons/delete.png') }}" alt="Remove" class="w-5 h-5 hover:opacity-80 transition">
-                        </button>
-                    </form>
-                </div>
-                @endforeach
-            </div>
+           <div class="space-y-6" id="cartItemsContainer">
+
+    <!-- Select All Checkbox -->
+    <div class="flex items-center gap-6 border-b pb-4">
+        <input type="checkbox" id="selectAll" checked class="w-5 h-5 text-[#56AB2F]" />
+        <label for="selectAll" class="font-semibold text-gray-800">Select All</label>
+    </div>
+
+    @foreach($cartItems as $item)
+    <div class="flex items-center gap-6 border-b pb-4 cart-item-row">
+        <input type="checkbox" class="item-checkbox w-5 h-5 text-[#56AB2F]" checked data-item-id="{{ $item->id }}" />
+        <img src="{{ asset('storage/' . $item->product->image) }}" alt="{{ $item->product->productName }}" class="w-24 h-24 object-cover rounded">
+        <div class="flex-1">
+            <h3 class="font-semibold text-lg text-gray-800">{{ $item->product->productName }}</h3>
+            <p class="text-sm text-gray-500">{{ $item->product->brandName }}</p>
+            <p class="text-[#56AB2F] font-semibold mt-1">₱{{ number_format($item->product->price, 2) }}</p>
+        </div>
+        <div class="flex items-center gap-2 justify-center text-center">
+            <input type="hidden" id="product-{{ $item->id }}" value="{{ $item->product_id }}">
+            <button type="button" onclick="updateQty({{ $item->id }}, -1)" class="px-2 py-1 bg-gray-200 rounded">−</button>
+            <input 
+                type="number"
+                id="qty-{{ $item->id }}"
+                value="{{ $item->quantity }}"
+                min="1"
+                max="{{ $item->product->quantity }}"
+                data-max="{{ $item->product->quantity }}"
+                data-price="{{ $item->product->price }}"
+                class="w-14 text-center border rounded" />
+            <button type="button" onclick="updateQty({{ $item->id }}, 1)" class="px-2 py-1 bg-gray-200 rounded">+</button>
+        </div>
+        <form onsubmit="deleteCartItem(event, {{ $item->id }})" id="delete-form-{{ $item->id }}">
+            @csrf
+            @method('DELETE')
+            <button onclick="openDeleteModal({{ $item->id }})" type="button" class="ml-4" title="Remove item">
+                <img src="{{ asset('images/icons/delete.png') }}" alt="Remove" class="w-5 h-5 hover:opacity-80 transition">
+            </button>
+        </form>
+    </div>
+    @endforeach
+</div>
+
 
             <div class="mt-8 flex justify-between items-center" id="cartSummary">
                 <p class="text-lg font-semibold text-gray-700">
@@ -100,11 +109,12 @@
                     </span>
                 </p>
                 <div class="flex gap-3">
-                    <a href="{{ route('checkout') }}" class="bg-[#56AB2F] text-white font-semibold px-6 py-3 rounded-lg hover:bg-green-700 transition">
+                   <a href="{{ route('checkout.show') }}" class="bg-[#56AB2F] text-white font-semibold px-6 py-3 rounded-lg hover:bg-green-700 transition">
                         Checkout
                     </a>
                 </div>
             </div>
+
         @else
             <p class="text-gray-500 text-center py-10" id="emptyMessage">Your cart is empty.</p>
             <div class="text-center" id="continueShopping">
@@ -262,28 +272,78 @@ function updateQty(id, change) {
         })
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
-                recalculateTotal();
-            } else {
-                alert(data.message || 'Update failed.');
-            }
-        })
+    if (data.success) {
+        const checkbox = document.querySelector(`.item-checkbox[data-item-id="${id}"]`);
+        if (checkbox && checkbox.checked) {
+            recalculateTotal();
+        }
+    } else {
+        alert(data.message || 'Update failed.');
+    }
+})
         .catch(error => console.error('Error:', error));
     }
 }
 
+
 function recalculateTotal() {
     let total = 0;
-    document.querySelectorAll('input[id^="qty-"]').forEach(input => {
-        const qty = parseInt(input.value);
-        const price = parseFloat(input.dataset.price);
-        if (!isNaN(qty) && !isNaN(price)) {
-            total += qty * price;
+    document.querySelectorAll('.item-checkbox').forEach(checkbox => {
+        if (checkbox.checked) {
+            const itemId = checkbox.dataset.itemId;
+            const qtyInput = document.getElementById(`qty-${itemId}`);
+            if (qtyInput) {
+                const qty = parseInt(qtyInput.value);
+                const price = parseFloat(qtyInput.dataset.price);
+                if (!isNaN(qty) && !isNaN(price)) {
+                    total += qty * price;
+                }
+            }
         }
     });
+
     const totalElement = document.getElementById('cart-total');
     if (totalElement) {
         totalElement.textContent = `₱${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
     }
 }
+
+function updateSelectAllState() {
+    const allCheckboxes = document.querySelectorAll('.item-checkbox');
+    const allChecked = [...allCheckboxes].every(cb => cb.checked);
+    document.getElementById('selectAll').checked = allChecked;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+
+    selectAllCheckbox.addEventListener('change', () => {
+        const checked = selectAllCheckbox.checked;
+        itemCheckboxes.forEach(cb => cb.checked = checked);
+        recalculateTotal();
+    });
+
+    itemCheckboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+            updateSelectAllState();
+            recalculateTotal();
+        });
+    });
+});
+
+document.querySelectorAll('input[id^="qty-"]').forEach(qtyInput => {
+    qtyInput.addEventListener('input', () => {
+        const itemId = qtyInput.id.replace('qty-', '');
+        const checkbox = document.querySelector(`.item-checkbox[data-item-id="${itemId}"]`);
+        if (checkbox && checkbox.checked) {
+            recalculateTotal();
+        }
+    });
+});
+
+window.onload = () => {
+    recalculateTotal();
+};
+
 </script>

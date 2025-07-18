@@ -148,9 +148,4 @@ public function index(Request $request)
 }
 
 
-    public function orders()
-    {
-        return view('admin.orders');
-    }
-
 }

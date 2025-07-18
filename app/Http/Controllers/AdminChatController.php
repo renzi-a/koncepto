@@ -63,7 +63,6 @@ class AdminChatController extends Controller
             ->where('is_read', false)
             ->update(['is_read' => true]);
 
-        // 🧠 Refresh the list of users with unread counts
         $users = $this->index()->getData()['users'];
 
         return view('admin.admin_chat', [
@@ -113,8 +112,6 @@ class AdminChatController extends Controller
     {
         $admin = Auth::user();
         $user = User::findOrFail($userId);
-
-        // Mark as read
         Message::where('sender_id', $user->id)
             ->where('receiver_id', $admin->id)
             ->where('is_read', false)

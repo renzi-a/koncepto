@@ -69,26 +69,24 @@
 </style>
 
     </head>
-    <!-- component -->
 <style>[x-cloak]{display:none!important;}</style>
 <body x-data="{ showLogoutModal: false }" class="font-poppins antialiased bg-[#F0F4F9] h-screen overflow-hidden">
   @php use Illuminate\Support\Facades\Auth; @endphp
 
   <div id="view" class="flex h-screen w-screen overflow-hidden">
     <aside class="w-[23rem] fixed transition transform ease-in-out duration-300 z-50 flex h-screen bg-[#56AB2F]">
-  <div class="text-white mt-16 flex-col space-y-2 w-full h-[calc(100vh)] px-4">
-    <div id="profile" class="text-center space-y-2 mb-4">
-      <div class="pb-3">
-        <img src="{{ asset('images/logo2.png') }}" alt="User Avatar" class="w-[120px] md:w-[140px] lg:w-[180px] mx-auto rounded-full"/>
-      </div>
-      @auth
-        <h2 class="font-semibold text-xl lg:text-2xl">{{ Auth::user()->first_name }} {{ Auth::user()->last_name }}</h2>
-        <p class="text-base text-white/70">{{ ucfirst(Auth::user()->role) }}</p>
-      @endauth
-    </div>
+      <div class="text-white mt-16 flex-col space-y-2 w-full h-[calc(100vh)] px-4">
+        <div id="profile" class="text-center space-y-2">
+          <div class="pb-3">
+            <img src="{{ asset('images/logo2.png') }}" alt="User Avatar" class="w-[120px] md:w-[140px] lg:w-[180px] mx-auto rounded-full"/>
+          </div>
+          @auth
+            <h2 class="font-semibold text-xl lg:text-2xl">{{ Auth::user()->first_name }} {{ Auth::user()->last_name }}</h2>
+            <p class="text-base text-white/70">{{ Auth::user()->role === 'school_admin' ? 'School Administrator Officer' : ucfirst(Auth::user()->role) }}</p>
+          @endauth
+        </div>
 
     <nav class="space-y-1.5 pt-4 text-sm font-medium">
-      <p class="text-white/70 font-semibold uppercase text-sm mt-4">Dashboard</p>
       <a href="{{ route('user.dashboard') }}"
         class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.dashboard') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
         <img src="{{ asset('images/dashboard.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Dashboard
@@ -102,23 +100,29 @@
       
       <a href="{{ route('user.users') }}"
       class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.users') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
-      <img src="{{ asset('images/user.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Users
+      <img src="{{ asset('images/users.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Users
     </a>
 
 
       <p class="text-white/70 font-semibold uppercase text-sm mt-4">Orders</p>
+
+      <a href="{{ route('user.order.index') }}"
+        class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.order.index') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
+        <img src="{{ asset('images/order.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Orders
+      </a>
+
       <a href="{{ route('user.order-request') }}"
-        class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.order-request') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
+        class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.order.request') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
         <img src="{{ asset('images/request.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Order Request
       </a>
 
       <a href="{{ route('user.track-order') }}"
-        class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.track-order') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
+        class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.order.track') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
         <img src="{{ asset('images/track.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Track Order
       </a>
 
       <a href="{{ route('user.order-history') }}"
-        class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.order-history') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
+        class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.order.history') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
         <img src="{{ asset('images/history.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Order History
       </a>
 
@@ -138,11 +142,31 @@
 
 
     <main id="main-content" class="flex-1 ml-[23rem] h-screen overflow-y-auto bg-[#F0F4F9] p-6">
+      <div class="w-full h-16 bg-white flex items-center justify-between px-6 mb-6">
+        <a href="{{ route('user.home') }}"
+          class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-white bg-gray-200 hover:bg-gray-600 px-4 py-1.5 rounded-md transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h18M3 12l6-6M3 12l6 6" />
+            </svg>
+            Home
+        </a>
+        <div class="flex items-center space-x-3">
+          @if(Auth::user()->school && Auth::user()->school->image)
+            <img src="{{ asset('storage/' . Auth::user()->school->image) }}" 
+                class="w-9 h-9 object-cover rounded-full border border-gray-300" 
+                alt="School Logo">
+          @else
+            <div class="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center text-xs text-gray-500 border border-gray-300">
+              Logo
+            </div>
+          @endif
+          <span class="text-gray-700 text-sm font-semibold">{{ Auth::user()->first_name }}</span>
+        </div>
+      </div>
       {{ $slot }}
     </main>
   </div>
 
-  <!-- Logout Modal -->
   <div x-show="showLogoutModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
     <div class="absolute inset-0" @click="showLogoutModal = false"></div>
     <div @click.stop class="p-6 sm:p-10 bg-white rounded-md w-[300px] md:w-[500px] text-center relative">

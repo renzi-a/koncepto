@@ -105,7 +105,7 @@
             </div>
             @endunless
 
-            <a href="{{ route('user.profile') }}">
+            <a href="{{ route('user.dashboard') }}">
                 <img src="{{ asset('images/user.png') }}" alt="Profile" class="w-7 h-7 hover:opacity-80 transition" />
             </a>
 

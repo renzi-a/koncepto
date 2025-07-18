@@ -92,18 +92,18 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">📈 Sales Trend</h2>
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Sales Trend</h2>
             <canvas id="salesTrendChart" class="w-full h-[400px]"></canvas>
         </div>
 
         <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">🏆 Top 10 Products</h2>
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Top 10 Products</h2>
             <canvas id="topProductsChart" class="w-full h-[400px]"></canvas>
         </div>
     </div>
 
     <div class="bg-white rounded-lg shadow p-6">
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">🗺️ Sales by School</h2>
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">Sales by School</h2>
         <div id="nasugbuMap" class="w-full h-[500px] rounded-md"></div>
     </div>
 

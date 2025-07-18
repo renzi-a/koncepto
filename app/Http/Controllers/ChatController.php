@@ -199,7 +199,7 @@ private function generateBotReply($message)
         }
     }
 
-    return "Thank you for your message. A KONCEPTO representative will get back to you shortly.";
+    return;
 }
 
 
