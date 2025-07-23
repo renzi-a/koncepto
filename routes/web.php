@@ -1,5 +1,8 @@
 <?php
 
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Http\Controllers\SchoolController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
@@ -21,6 +24,7 @@ use App\Models\Notification;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Middleware\IsAdmin;
 use App\Http\Middleware\IsUser;
+use Illuminate\Http\Request;
 
 // Public Routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -46,6 +50,12 @@ Route::middleware(['auth', IsAdmin::class])->group(function () {
         ->name('admin.custom-orders.quotation');
     Route::post('/admin/custom-orders/{id}/quotation', [OrderController::class, 'saveQuotationPrices'])
         ->name('admin.custom-orders.quotation.save');
+    Route::get('/admin/custom-orders/{id}/gather', [OrderController::class, 'gather'])
+        ->name('admin.custom-orders.gather');
+    Route::get('/admin/custom-orders/{id}/gather-pdf', [OrderController::class, 'gatherPdf'])
+        ->name('admin.custom-orders.gather-pdf');
+    Route::post('/admin/custom-orders/items/{id}/toggle-gathered', [OrderController::class, 'toggleGathered'])->name('admin.custom-orders.toggle-gathered');
+
 
     Route::get('/admin/payment', [PaymentController::class, 'index'])->name('admin.payment');
 
@@ -153,7 +163,11 @@ Route::middleware(['auth', IsUser::class])->group(function () {
     Route::get('/orders/quoted/{id}', [CustomOrderController::class, 'showQuotedOrder'])->name('user.order.quoted.show');
     Route::get('/orders/quoted/{id}/pdf', [CustomOrderController::class, 'downloadQuotedOrderPdf'])->name('user.order.quoted.pdf');
     Route::put('/user/custom-orders/{id}/approve', [CustomOrderController::class, 'approve'])
-    ->name('user.custom-orders.approve');
+        ->name('user.custom-orders.approve');
+    Route::get('/user/custom-orders/{customOrder}/gather', [CustomOrderController::class, 'gatherView'])
+        ->name('user.custom-orders.gather');
+    Route::get('/user/custom-orders/{id}/gather-pdf', [CustomOrderController::class, 'gatherPdf'])
+        ->name('user.order.gather-pdf');
 
 });
 

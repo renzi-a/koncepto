@@ -5,7 +5,8 @@
             isLoading: false, 
             cancelOrderId: null, 
             cancelOrderType: '', 
-            reasonText: '' 
+            reasonText: '',
+            activeTab: 'all'
         }"
     >
         <div class="flex justify-between items-center">
@@ -16,8 +17,49 @@
             </a>
         </div>
 
+        <!-- Tabs -->
+        <div class="mt-6 border-b border-gray-200">
+            <nav class="flex space-x-4 text-sm font-medium">
+                <button @click="activeTab = 'all'" 
+                    :class="activeTab === 'all' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'"
+                    class="pb-2">
+                    All ({{ $normalOrders->count() + $customOrders->count() }})
+                </button>
+                <button @click="activeTab = 'new'" 
+                    :class="activeTab === 'new' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'"
+                    class="pb-2">
+                    New ({{ 
+                        $normalOrders->where('status', 'new')->count() + 
+                        $customOrders->whereIn('status', ['to be quoted', 'quoted'])->count() 
+                    }})
+                </button>
+                <button @click="activeTab = 'pending'" 
+                    :class="activeTab === 'pending' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'"
+                    class="pb-2">
+                    Pending ({{ 
+                        $normalOrders->whereIn('status', ['approved', 'gathering', 'to be delivered'])->count() + 
+                        $customOrders->whereIn('status', ['approved', 'gathering', 'to be delivered'])->count() 
+                    }})
+                </button>
+                <button @click="activeTab = 'completed'" 
+                    :class="activeTab === 'completed' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'"
+                    class="pb-2">
+                    Completed ({{ 
+                        $normalOrders->where('status', 'delivered')->count() + 
+                        $customOrders->where('status', 'delivered')->count() 
+                    }})
+                </button>
+            </nav>
+        </div>
+
         @foreach ($normalOrders as $order)
-            <div class="bg-blue-50 border-l-4 border-blue-400 rounded-xl shadow p-4 mb-4">
+            <div 
+                x-show="activeTab === 'all' 
+                    || (activeTab === 'new' && ['new'].includes('{{ $order->status }}'))
+                    || (activeTab === 'pending' && ['approved', 'gathering', 'to be delivered'].includes('{{ $order->status }}'))
+                    || (activeTab === 'completed' && '{{ $order->status }}' === 'delivered')"
+                class="bg-blue-50 border-l-4 border-blue-400 rounded-xl shadow p-4 mb-4"
+            >
                 <div class="flex justify-between items-stretch mb-2">
                     <div>
                         <h2 class="text-xl font-semibold text-gray-700">Order #{{ $order->id }}</h2>
@@ -57,7 +99,13 @@
         @endforeach
 
         @foreach ($customOrders as $order)
-            <div class="bg-yellow-50 border-l-4 border-yellow-400 rounded-xl shadow p-4 mb-4">
+            <div 
+                x-show="activeTab === 'all' 
+                    || (activeTab === 'new' && ['to be quoted', 'quoted'].includes('{{ $order->status }}'))
+                    || (activeTab === 'pending' && ['approved', 'gathering', 'to be delivered'].includes('{{ $order->status }}'))
+                    || (activeTab === 'completed' && '{{ $order->status }}' === 'delivered')"
+                class="bg-yellow-50 border-l-4 border-yellow-400 rounded-xl shadow p-4 mb-4"
+            >
                 <div class="flex justify-between items-stretch mb-2">
                     <div>
                         <h2 class="text-xl font-semibold text-gray-700">Order #C{{ $order->id }}</h2>
@@ -97,7 +145,13 @@
                 </div>
 
                 <div class="flex justify-between items-center mt-4 text-sm">
-                    <a href="{{ route('user.custom-orders.show', $order->id) }}" class="text-blue-500 hover:underline text-sm">
+                    <a 
+                        href="{{ $order->status === 'gathering' 
+                            ? route('user.custom-orders.gather', $order->id) 
+                            : route('user.custom-orders.show', $order->id) 
+                        }}" 
+                        class="text-blue-500 hover:underline text-sm"
+                    >
                         View Details
                     </a>
                     <span class="text-gray-500">{{ $order->created_at->format('M d, Y') }}</span>

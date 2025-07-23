@@ -9,6 +9,7 @@ use App\Models\OrderDetail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Models\Payment;
 
 class UserOrderController extends Controller
 {

@@ -21,7 +21,6 @@ public function index(Request $request)
     $startDate = $year ? Carbon::createFromDate($year)->startOfYear() : Carbon::now()->startOfYear();
     $endDate = $year ? Carbon::createFromDate($year)->endOfYear() : Carbon::now()->endOfYear();
 
-    // === Regular Orders ===
     $pendingOrders = Orders::where('status', 'new')
         ->whereBetween('created_at', [$startDate, $endDate])
         ->count();
@@ -35,7 +34,6 @@ public function index(Request $request)
               ->whereBetween('created_at', [$startDate, $endDate]);
     })->sum(DB::raw('price * quantity'));
 
-    // === Custom Orders ===
     $customPending = CustomOrder::whereIn('status', [
         'to_be_quoted',
         'quoted',
@@ -57,7 +55,6 @@ public function index(Request $request)
 
     $totalRevenue = $orderRevenue + $customRevenue;
 
-    // === Monthly Revenue Trend ===
     $monthlyRevenue = collect(range(1, 12))->map(function ($month) use ($startDate) {
         $normal = Orders::where('status', 'delivered')
             ->whereYear('created_at', $startDate->year)
@@ -79,7 +76,6 @@ public function index(Request $request)
         return $normal + $custom;
     })->toArray();
 
-    // === Top Products ===
     $topProducts = DB::table('order_details')
         ->join('orders', 'order_details.order_id', '=', 'orders.id')
         ->join('products', 'order_details.product_id', '=', 'products.id')
@@ -91,7 +87,6 @@ public function index(Request $request)
         ->limit(10)
         ->get();
 
-    // === Sales by School ===
     $schoolSales = School::withCount([
         'orders as total_normal_orders' => function ($query) use ($startDate, $endDate) {
             $query->whereBetween('orders.created_at', [$startDate, $endDate]);
@@ -104,9 +99,7 @@ public function index(Request $request)
         return $school;
     });
 
-    // Add total_revenue per school
 $schoolSales->transform(function ($school) use ($startDate, $endDate) {
-    // Revenue from normal orders
     $normalRevenue = OrderDetail::whereHas('order', function ($query) use ($school, $startDate, $endDate) {
         $query->where('status', 'delivered')
               ->whereBetween('created_at', [$startDate, $endDate])
@@ -115,7 +108,6 @@ $schoolSales->transform(function ($school) use ($startDate, $endDate) {
               });
     })->sum(DB::raw('price * quantity'));
 
-    // Revenue from custom orders
     $customRevenue = \App\Models\CustomOrderItem::whereHas('customOrder', function ($query) use ($school, $startDate, $endDate) {
         $query->where('status', 'delivered')
               ->whereBetween('created_at', [$startDate, $endDate])
@@ -129,7 +121,6 @@ $schoolSales->transform(function ($school) use ($startDate, $endDate) {
 });
 
 
-    // === Previous Year Revenue Comparison ===
     $previousStart = (clone $startDate)->subYear();
     $previousEnd = (clone $endDate)->subYear();
 
@@ -149,7 +140,6 @@ $schoolSales->transform(function ($school) use ($startDate, $endDate) {
         ? (($totalRevenue - $previousRevenue) / $previousRevenue) * 100
         : 0;
 
-    // === Pending Change % ===
     $previousPendingOrders = Orders::where('status', 'new')
     ->whereBetween('created_at', [$previousStart, $previousEnd])
     ->count();

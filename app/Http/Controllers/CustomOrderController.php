@@ -258,7 +258,7 @@ public function downloadQuotedOrderPdf($id)
 
    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('user.order.quoted-pdf', compact('order'));
 
-    return $pdf->download("CustomOrder-{$order->id}-Quotation.pdf");
+    return $pdf->stream("CustomOrder-{$order->id}-Quotation.pdf");
 }
 
 public function approve(Request $request, $id)
@@ -295,5 +295,21 @@ public function approve(Request $request, $id)
     return redirect()->route('user.order.index')->with('success', 'Order approved successfully.');
 }
 
+public function gatherView($id)
+{
+    $order = CustomOrder::with(['items', 'user.school'])->findOrFail($id);
+    $items = $order->items;
 
+    return view('user.order.gather', compact('order', 'items'));
+}
+
+public function gatherPdf($id)
+{
+    $order = CustomOrder::with(['items', 'user.school'])->findOrFail($id);
+    $items = $order->items;
+
+    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('user.order.gather-pdf', compact('order', 'items'));
+
+    return $pdf->stream("CustomOrder-{$order->id}-Gathered.pdf");
+}
 }

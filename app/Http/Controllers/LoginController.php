@@ -42,5 +42,36 @@ public function logout(Request $request)
     return redirect('/login');
 }
 
+public function apiLogin(Request $request)
+{
+    $credentials = $request->only('email', 'password');
 
+    if (Auth::attempt($credentials)) {
+        $user = Auth::user();
+
+        if ($user->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only admins can login'
+            ], 403);
+        }
+
+        return response()->json([
+            'success' => true,
+            'user' => [
+                'id' => $user->id,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'date_joined' => $user->created_at,
+            ]
+        ]);
+    }
+
+    return response()->json([
+        'success' => false,
+        'message' => 'Invalid credentials'
+    ], 401);
+}
 }

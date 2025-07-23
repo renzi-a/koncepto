@@ -10,7 +10,7 @@
         <li>
             <a href="?tab=all"
             class="{{ $tab == 'all' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-600 hover:text-green-600' }} font-semibold pb-2 flex items-center space-x-1">
-                <span>All</span>
+                <span>All Pending</span>
                 <span class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full">{{ $allOrdersCount }}</span>
             </a>
         </li>
@@ -28,7 +28,15 @@
                 <span class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full">{{ $customOrdersCount }}</span>
             </a>
         </li>
+            <li>
+        <a href="?tab=completed"
+           class="{{ $tab == 'completed' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-600 hover:text-green-600' }} font-semibold pb-2 flex items-center space-x-1">
+            <span>Completed</span>
+            <span class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full">{{ $completedOrdersCount }}</span>
+        </a>
+    </li>
     </ul>
+    
         </div>
 
         <div class="flex flex-wrap gap-3">
@@ -71,7 +79,7 @@
                     <p class="text-sm text-gray-700">
                         {{ $order->user->first_name ?? '-' }} {{ $order->user->last_name ?? '' }}
                         @if($order->user && $order->user->school)
-                            – {{ $order->user->school->name }}
+                            – {{ $order->user->school->school_name }}
                         @endif
                     </p>
                 </div>
@@ -104,12 +112,18 @@
             </div>
 
             <div class="flex justify-between items-center mt-4 text-sm">
-                <a href="{{ $order->is_custom 
+<a href="{{ 
+    $order->is_custom && in_array(strtolower($order->status), ['approved', 'gathering'])
+        ? route('admin.custom-orders.gather', $order->id)
+        : ($order->is_custom
             ? route('admin.custom-orders.show', $order->id)
-            : route('admin.orders.show', $order->id) }}"
-    class="text-blue-500 hover:underline">
-    {{ strtolower($order->status) === 'approved' ? 'View Approved Order' : 'View Details' }}
+            : route('admin.orders.show', $order->id))
+}}"
+class="text-blue-500 hover:underline">
+    {{ strtolower($order->status) === 'approved' && $order->is_custom ? 'View Approved Order' : 'View Details' }}
 </a>
+
+
                 <span class="text-gray-500">{{ $order->created_at->format('M d, Y') }}</span>
             </div>
         </div>

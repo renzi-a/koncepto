@@ -1,13 +1,13 @@
 <x-profile-link>
     <div class="container mx-auto px-4 py-6 space-y-6">
         <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl md:text-3xl font-bold text-gray-800 text-right">
-        @if ($order instanceof \App\Models\CustomOrder)
-            Custom Order #{{ $order->id }}
-        @else
-            Order #{{ $order->id }}
-        @endif
-    </h1>
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-800 text-right" spellcheck="false">
+            @if ($order instanceof \App\Models\CustomOrder)
+                Custom Order #{{ $order->id }}
+            @else
+                Order #{{ $order->id }}
+            @endif
+        </h1>
     <a href="{{ route('user.order-history') }}" class="text-blue-600 hover:underline text-sm">
         ← Back to Order History
     </a>

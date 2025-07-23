@@ -58,7 +58,7 @@
                                         ? route('user.order-history-show', $order['id']) 
                                         : ($order['order_type'] === 'custom' 
                                             ? route('custom-orders.show', $order['id']) 
-                                            : route('orders.show', $order['id'])) }}" 
+                                            : route('user.order.show', $order['id'])) }}" 
                                         class="text-blue-600 hover:underline text-sm">
                                         View Details
                                     </a>  

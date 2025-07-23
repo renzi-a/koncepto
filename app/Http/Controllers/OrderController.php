@@ -17,25 +17,51 @@ public function adminOrders(Request $request)
     $status = $request->get('status', 'All');
 
     $normalOrdersQuery = Orders::with('user.school');
-    if ($tab === 'orders' || $tab === 'all') {
+    if ($tab === 'orders') {
         if ($status !== 'All') {
             $normalOrdersQuery->where('status', $status);
+        } else {
+            $normalOrdersQuery->where('status', '!=', 'delivered');
         }
+    } elseif ($tab === 'all') {
+        $normalOrdersQuery->where('status', '!=', 'delivered');
     }
+
     $normalOrders = $normalOrdersQuery->latest()->get();
     foreach ($normalOrders as $order) {
         $order->is_custom = false;
     }
 
     $customOrdersQuery = CustomOrder::with('user.school')->withCount('items');
-    if ($tab === 'custom' || $tab === 'all') {
+    if ($tab === 'custom') {
         if ($status !== 'All') {
             $customOrdersQuery->where('status', $status);
+        } else {
+            $customOrdersQuery->where('status', '!=', 'delivered');
         }
+    } elseif ($tab === 'all') {
+        $customOrdersQuery->where('status', '!=', 'delivered');
     }
+
     $customOrders = $customOrdersQuery->latest()->get();
     foreach ($customOrders as $order) {
         $order->is_custom = true;
+    }
+
+    if ($tab === 'completed') {
+        $normalOrders = Orders::with('user.school')
+            ->where('status', 'delivered')
+            ->latest()->get();
+        foreach ($normalOrders as $order) {
+            $order->is_custom = false;
+        }
+
+        $customOrders = CustomOrder::with('user.school')->withCount('items')
+            ->where('status', 'delivered')
+            ->latest()->get();
+        foreach ($customOrders as $order) {
+            $order->is_custom = true;
+        }
     }
 
     if ($tab === 'orders') {
@@ -46,23 +72,26 @@ public function adminOrders(Request $request)
         $orders = $normalOrders->merge($customOrders)->sortByDesc('created_at')->values();
     }
 
-    $normalOrdersCount = Orders::count();
-    $customOrdersCount = CustomOrder::count();
-    $allOrdersCount = $normalOrdersCount + $customOrdersCount;
+$normalOrdersCount = Orders::where('status', '!=', 'delivered')->count();
+$customOrdersCount = CustomOrder::where('status', '!=', 'delivered')->count();
+$allOrdersCount = $normalOrdersCount + $customOrdersCount;
 
-    return view('admin.orders', compact(
-        'orders',
-        'normalOrders',
-        'customOrders',
-        'tab',
-        'status',
-        'normalOrdersCount',
-        'customOrdersCount',
-        'allOrdersCount'
-    ));
+$completedNormalCount = Orders::where('status', 'delivered')->count();
+$completedCustomCount = CustomOrder::where('status', 'delivered')->count();
+$completedOrdersCount = $completedNormalCount + $completedCustomCount;
+
+return view('admin.orders', compact(
+    'orders',
+    'normalOrders',
+    'customOrders',
+    'tab',
+    'status',
+    'normalOrdersCount',
+    'customOrdersCount',
+    'allOrdersCount',
+    'completedOrdersCount'
+));
 }
-
-
 
     public function fetchOrders(Request $request)
 {
@@ -226,8 +255,41 @@ public function saveQuotationPrices(Request $request, $orderId)
     $order->status = 'quoted';
     $order->save();
 
-    return redirect()->route('admin.custom-orders.show', $orderId)
+    return redirect()->route('admin.orders', $orderId)
                      ->with('success', 'Prices saved and order status updated to quoted.');
+}
+public function gather($id)
+{
+    $order = CustomOrder::with('items')->findOrFail($id);
+
+    if (strtolower($order->status) === 'approved') {
+        $order->status = 'gathering';
+        $order->save();
+    }
+
+    $items = $order->items;
+
+    return view('admin.gather', compact('order', 'items'));
+}
+
+public function gatherPdf($id)
+{
+    $order = CustomOrder::with(['items', 'user.school'])->findOrFail($id);
+    $items = $order->items;
+
+    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.gather-pdf', compact('order', 'items'));
+
+    return $pdf->stream("CustomOrder-{$order->id}-Gathered.pdf");
+}
+
+
+public function toggleGathered(Request $request, $id)
+{
+    $item = \App\Models\CustomOrderItem::findOrFail($id);
+    $item->gathered = $request->input('gathered', false);
+    $item->save();
+
+    return response()->json(['success' => true]);
 }
 
 

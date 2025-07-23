@@ -27,7 +27,7 @@
         <h1 class="text-2xl font-bold">Custom Order #C{{ $order->id }}</h1>
         <a href="{{ route('user.order.quoted.pdf', $order->id) }}" target="_blank"
    class="inline-block bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded">
-    Download PDF
+    View PDF
 </a>
     </div>
 

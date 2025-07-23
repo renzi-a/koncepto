@@ -39,11 +39,6 @@
                 <h2 class="text-xl font-semibold text-gray-700 mb-4">Monthly Order Trend</h2>
                 <canvas id="schoolSalesTrendChart" class="w-full h-[400px]"></canvas>
             </div>
-
-            <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-xl font-semibold text-gray-700 mb-4">Recent Deliveries</h2>
-                <div id="deliveryMap" class="w-full h-[400px] rounded-md"></div>
-            </div>
         </div>
 
         <div class="bg-white rounded-lg shadow p-6 overflow-x-auto">
@@ -112,29 +107,5 @@
         } else if (ctx) {
     ctx.parentNode.innerHTML = '<div class="text-gray-500 text-sm text-center py-10">No sales trend data available</div>';
 }
-
-        const deliveryMap = document.getElementById('deliveryMap');
-        const deliveries = @json($recentDeliveries);
-
-        if (deliveryMap && deliveries.length) {
-            const map = L.map('deliveryMap').setView([14.07, 120.80], 12);
-
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap'
-            }).addTo(map);
-
-            deliveries.forEach(delivery => {
-                if (!delivery.lat || !delivery.lng) return;
-
-                const marker = L.marker([delivery.lat, delivery.lng]).addTo(map);
-                marker.bindPopup(`
-                    <div class="text-sm">
-                        <strong>Order #${delivery.order_id}</strong><br>
-                        Status: ${delivery.status}<br>
-                        Updated: ${delivery.updated_at}
-                    </div>
-                `);
-            });
-        }
     </script>
 </x-profile-link>

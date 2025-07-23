@@ -19,15 +19,15 @@ class CustomOrderItem extends Model
         'description',
         'price',
         'total_price',
+        'gathered',
+    ];
+    protected $casts = [
+        'gathered' => 'boolean',
     ];
 
     public function customOrder()
-{
-    return $this->belongsTo(CustomOrder::class);
-}
-
-    public function order()
     {
         return $this->belongsTo(CustomOrder::class);
     }
+
 }
