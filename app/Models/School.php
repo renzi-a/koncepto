@@ -11,6 +11,7 @@ class School extends Model
         'user_id',
         'school_name',
         'school_email',
+        'principal',
         'address',
         'image',
         'lat', 
@@ -27,17 +28,18 @@ class School extends Model
         return $this->hasMany(Orders::class);
     }
 
-    public function customOrder()
+public function customOrder()
 {
     return $this->hasManyThrough(
         \App\Models\CustomOrder::class,
         \App\Models\User::class,
-        'school_id',
-        'user_id',
-        'id',
-        'id'
+        'school_id', 
+        'user_id',   
+        'id',  
+        'id'   
     );
 }
+
 
     public function users()
     {

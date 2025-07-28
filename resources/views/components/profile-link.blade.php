@@ -11,7 +11,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>Admin</title>
+        <title>User</title>
 
 
 
@@ -78,11 +78,12 @@
       <div class="text-white mt-16 flex-col space-y-2 w-full h-[calc(100vh)] px-4">
         <div id="profile" class="text-center space-y-2">
           <div class="pb-3">
-            <img src="{{ asset('images/logo2.png') }}" alt="User Avatar" class="w-[120px] md:w-[140px] lg:w-[180px] mx-auto rounded-full"/>
+            <img src="{{ asset('storage/' . Auth::user()->school->image) }}" alt="User Avatar" class="w-[120px] md:w-[140px] lg:w-[100px] mx-auto rounded-full"/>
           </div>
           @auth
             <h2 class="font-semibold text-xl lg:text-2xl">{{ Auth::user()->first_name }} {{ Auth::user()->last_name }}</h2>
             <p class="text-base text-white/70">{{ Auth::user()->role === 'school_admin' ? 'School Administrator Officer' : ucfirst(Auth::user()->role) }}</p>
+            <p class="text-base text-white/70">{{ Auth::user()->school->school_name ?? 'N/A' }}</p>
           @endauth
         </div>
 

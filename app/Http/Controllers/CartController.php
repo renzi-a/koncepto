@@ -126,8 +126,6 @@ public function form()
 }
 
 
-
-
 public function process(Request $request)
     {
         $request->validate([

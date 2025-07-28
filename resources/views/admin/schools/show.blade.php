@@ -12,7 +12,8 @@
 
         <div>
             <h1 class="text-4xl font-bold text-gray-800">{{ $school->school_name }}</h1>
-            <p class="text-lg text-gray-600 mt-2">{{ $school->address }}</p>
+            <h1 class="text-lg mt-2 font-bold text-gray-800">{{ $school->principal}}</h1>
+            <p class="text-lg text-gray-600 ">{{ $school->address }}</p>
             <p class="text-md text-gray-500">{{ $school->school_email }}</p>
         </div>
     </div>

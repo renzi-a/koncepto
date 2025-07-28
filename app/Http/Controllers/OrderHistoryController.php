@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CustomOrder;
 use Illuminate\Http\Request;
 use App\Models\Orders;
 use App\Models\OrderHistory;
@@ -12,36 +13,50 @@ use Illuminate\Support\Collection;
 
 class OrderHistoryController extends Controller
 {
-    public function index(Request $request)
+   public function index(Request $request)
     {
         if (Auth::user()->role !== 'school_admin') {
             abort(403, 'Access denied');
         }
+
         $userId = Auth::id();
+        $schoolId = Auth::user()->school_id;
         $search = $request->input('search');
         $perPage = 10;
         $page = LengthAwarePaginator::resolveCurrentPage();
 
-        $completedOrders = Orders::where('user_id', $userId)
+        $deliveredNormalOrders = Orders::where('school_id', $schoolId)
             ->where('status', 'delivered')
-            ->when($search, function ($query, $search) {
-                $query->where('id', 'like', "%$search%");
-            })
+            ->when($search, fn ($query, $search) => $query->where('id', 'like', "%$search%"))
             ->get()
             ->each(function ($order) {
                 $order->type = 'normal';
+                $order->order_status = 'Delivered';
             });
 
-        $cancelledCustomOrders = OrderHistory::where('user_id', $userId)
-            ->when($search, function ($query, $search) {
-                $query->where('custom_order_id', 'like', "%$search%");
-            })
+        $deliveredCustomOrders = CustomOrder::with('items')
+            ->whereHas('user', fn ($query) => $query->where('school_id', $schoolId))
             ->get()
+            ->filter(fn ($customOrder) => $customOrder->items->isNotEmpty() && $customOrder->items->every('gathered'))
+            ->when($search, fn ($query) => $query->filter(fn ($order) => str_contains($order->id, $search)))
             ->each(function ($order) {
                 $order->type = 'custom';
+                $order->order_status = 'Delivered';
             });
-
-        $merged = $completedOrders->merge($cancelledCustomOrders)->sortByDesc('created_at')->values();
+            
+        $cancelledOrders = OrderHistory::where('user_id', $userId)
+            ->when($search, fn ($query, $search) => $query->where('custom_order_id', 'like', "%$search%"))
+            ->get()
+            ->each(function ($order) {
+                $order->type = $order->custom_order_id ? 'custom' : 'normal';
+                $order->order_status = 'Cancelled';
+            });
+        
+        $merged = $deliveredNormalOrders
+            ->merge($deliveredCustomOrders)
+            ->merge($cancelledOrders)
+            ->sortByDesc('created_at')
+            ->values();
 
         $paginated = new LengthAwarePaginator(
             $merged->forPage($page, $perPage),

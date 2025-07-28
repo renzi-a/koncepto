@@ -1,6 +1,6 @@
 <x-profile-link>
     <div class="container mx-auto px-4 py-6 space-y-8" 
-        x-data="{ showConfirm: false, showSaved: {{ session('success') ? 'true' : 'false' }} }"
+        x-data="{ showConfirm: false, showSaved: {{ session('success') ? 'true' : 'false' }}, showSaving: false }"
     >
         <div class="flex items-center space-x-8 mb-8">
             @if(auth()->user()->school && auth()->user()->school->image)
@@ -22,12 +22,6 @@
         </div>
 
         <div class="bg-white rounded-xl shadow p-8 w-full">
-            <div class="mb-6">
-                <p class="text-sm text-gray-500">School</p>
-                <p class="text-lg font-semibold text-gray-800">
-                    {{ auth()->user()->school->school_name ?? 'N/A' }}
-                </p>
-            </div>
 
             <form 
                 method="POST" 
@@ -115,11 +109,27 @@
                     </button>
                     <button 
                         class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-                        @click="$refs.profileForm.submit()"
+                        @click="showConfirm = false; showSaving = true; $refs.profileForm.submit()"
                     >
                         Confirm
                     </button>
                 </div>
+            </div>
+        </div>
+
+        <div 
+            x-show="showSaving" 
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 scale-90"
+            x-transition:enter-end="opacity-100 scale-100"
+            class="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center"
+        >
+            <div class="bg-white rounded-xl p-8 shadow-lg flex items-center space-x-5 animate-fadeIn">
+                <svg class="animate-spin text-[#56AB2F]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 48px; height: 48px;">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                </svg>
+                <span class="text-[#56AB2F] font-semibold text-xl">Saving changes...</span>
             </div>
         </div>
 
@@ -133,3 +143,20 @@
         </div>
     </div>
 </x-profile-link>
+
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    .animate-fadeIn {
+        animation: fadeIn 0.3s ease-out forwards;
+    }
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .animate-spin {
+        animation: spin 1s linear infinite;
+    }
+</style>

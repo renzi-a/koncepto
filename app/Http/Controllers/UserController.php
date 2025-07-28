@@ -78,35 +78,62 @@ class UserController extends Controller
 
         return response()->json(['status' => 'marked']);
     }
-
-    public function dashboard()
+public function dashboard()
     {
-        $school = Auth::user()->school;
+    $school = Auth::user()->school;
 
-        $totalOrders = $school ? $school->orders()->count() : 0;
-        $pendingOrders = $school ? $school->orders()->where('status', 'pending')->count() : 0;
-        $deliveredOrders = $school ? $school->orders()->where('status', 'delivered')->count() : 0;
+    $regularOrders = $school ? $school->orders : collect();
+    $customOrders = $school ? $school->customOrder : collect();
+        
+        $allOrders = $regularOrders->merge($customOrders);
+        $totalOrders = $allOrders->count();
 
-        $recentOrders = $school ? $school->orders()->latest()->take(5)->get() : collect();
+        $deliveredRegularOrders = $regularOrders->where('status', 'delivered')->count();
+        $deliveredCustomOrders = $customOrders->where('status', 'delivered')->count();
+        $deliveredOrders = $deliveredRegularOrders + $deliveredCustomOrders;
 
+        $regularOrderCount = $regularOrders->count();
+        $customOrderCount = $customOrders->count();
+
+        // Add new counts for the dashboard
+        $studentCount = $school ? $school->students()->count() : 0;
+        $teacherCount = $school ? $school->teachers()->count() : 0;
+        $customOrderItemsCount = $customOrders->flatMap(fn ($order) => $order->items)->count();
+
+        // Fetch recent orders by merging and sorting the collections
+        $recentOrders = $regularOrders->take(5)->map(function ($order) {
+            $order->type = 'Regular';
+            return $order;
+        });
+
+        $recentCustomOrders = $customOrders->take(5)->map(function ($order) {
+            $order->type = 'Custom';
+            return $order;
+        });
+        
+        $combinedRecentOrders = $recentOrders->merge($recentCustomOrders)->sortByDesc('created_at')->take(5);
+
+        // Prepare monthly sales data by combining counts from both order types
         $salesLabels = ['Jan', 'Feb', 'Mar', 'Apr'];
-        $salesData = $school ? [
-            $school->orders()->whereMonth('created_at', 1)->count(),
-            $school->orders()->whereMonth('created_at', 2)->count(),
-            $school->orders()->whereMonth('created_at', 3)->count(),
-            $school->orders()->whereMonth('created_at', 4)->count(),
-        ] : [0, 0, 0, 0];
-
-        $recentDeliveries = $school ? $school->deliveries()->whereNotNull('lat')->whereNotNull('lng')->latest()->take(5)->get() : collect();
+        $salesData = [];
+        foreach ($salesLabels as $index => $month) {
+            $monthNumber = $index + 1;
+            $regularCount = $regularOrders->where('created_at', '>=', now()->subMonths(4))->where('created_at', 'like', "%-{$monthNumber}-%")->count();
+            $customCount = $customOrders->where('created_at', '>=', now()->subMonths(4))->where('created_at', 'like', "%-{$monthNumber}-%")->count();
+            $salesData[] = $regularCount + $customCount;
+        }
 
         return view('user.dashboard', compact(
             'totalOrders',
-            'pendingOrders',
             'deliveredOrders',
-            'recentOrders',
+            'regularOrderCount',
+            'customOrderCount',
+            'studentCount',
+            'teacherCount',
+            'customOrderItemsCount',
+            'combinedRecentOrders',
             'salesLabels',
-            'salesData',
-            'recentDeliveries'
+            'salesData'
         ));
     }
 

@@ -102,7 +102,7 @@
 
     <div class="info-section left">
         <p class="text-bold">Name: <span class="text-blue">{{ $principal->name ?? 'N/A' }}</span></p>
-        <p class="text-bold">Position: <span>School Principal</span></p>
+        <p class="text-bold">Position: <span>{{ $order->user->school->principal ?? 'N/A' }}</span></p>
         <p class="text-bold">Business Name: <span class="text-blue">{{ $order->user->school->school_name ?? 'N/A' }}</span></p>
         <p class="text-bold">Business Address: <span>{{ $order->user->school->address ?? 'N/A' }}</span></p>
         <p style="margin-top: 15px;">

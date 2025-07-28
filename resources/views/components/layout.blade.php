@@ -120,7 +120,7 @@
 
   <p class="text-white/70 font-semibold uppercase text-sm mt-4">Ecommerce</p>
 
-  <x-side-link class="sidebar-link no-ajax" href="{{ route('admin.orders') }}" :active="request()->is('orders')">
+  <x-side-link class="sidebar-link" href="{{ route('admin.orders') }}" :active="request()->is('orders')">
     <img src="{{ asset('images/order.png') }}" alt="Order Icon" class="w-6 h-6 inline-block mr-3 ms-20">
     Orders
   </x-side-link>
@@ -191,19 +191,6 @@
   </div>
 
   <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const logoutForm = document.querySelector('form[action="{{ route('logout') }}"]');
-    const overlay = document.getElementById("loadingOverlay");
-
-    if (logoutForm) {
-      logoutForm.addEventListener("submit", function () {
-        overlay.classList.remove("hidden");
-      });
-    }
-  });
-</script>
-
-<script>
 document.addEventListener('DOMContentLoaded', () => {
   const mainContent = document.getElementById('main-content');
 
@@ -232,6 +219,12 @@ document.addEventListener('DOMContentLoaded', () => {
           if (newMain) {
             mainContent.innerHTML = newMain.innerHTML;
             history.pushState({}, '', href);
+
+            // Re-init map or scripts if needed
+            if (typeof initMap === 'function') initMap();
+            if (typeof window.dispatchEvent === 'function') {
+              window.dispatchEvent(new Event('DOMContentLoaded'));
+            }
 
             document.querySelectorAll('.sidebar-link').forEach(l => {
               l.classList.remove('bg-[#3E8E24]');

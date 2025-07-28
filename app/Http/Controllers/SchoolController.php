@@ -12,8 +12,11 @@ class SchoolController extends Controller
     public function index()
     {
         $schools = School::with('users')->get()->map(function ($school) {
-            $school->orders_count = $school->orders()->count();
-            
+            $regularOrders = $school->orders()->count();
+            $customOrder = $school->customOrder()->count();
+
+            $school->orders_count = $regularOrders + $customOrder;
+
             $school->users_count = $school->users()->count();
             $school->admin_count = $school->users()->where('role', 'school_admin')->count();
             $school->teacher_count = $school->users()->where('role', 'teacher')->count();
@@ -25,11 +28,11 @@ class SchoolController extends Controller
         return view('admin.schools.index', compact('schools'));
     }
 
-
     public function create()
     {
         return view('admin.schools.create');
     }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -39,6 +42,7 @@ class SchoolController extends Controller
             'logo' => 'nullable|image|max:2048',
             'lat' => 'required|numeric',
             'lng' => 'required|numeric',
+            'principal' => 'required|string|max:255',
 
             'admin_first_name' => 'required|string|max:255',
             'admin_last_name' => 'required|string|max:255',
@@ -48,7 +52,8 @@ class SchoolController extends Controller
             'admin_password' => 'required|string|min:8|confirmed',
         ]);
 
-        $user = User::create([
+        // Create admin user
+        $admin = User::create([
             'first_name' => $validated['admin_first_name'],
             'last_name' => $validated['admin_last_name'],
             'email' => $validated['admin_email'],
@@ -62,40 +67,39 @@ class SchoolController extends Controller
             $logoPath = $request->file('logo')->store('logos', 'public');
         }
 
+        // Create school and assign admin user
         $school = School::create([
-                'school_name' => $validated['school_name'],
-                'address' => $validated['address'],
-                'school_email' => $validated['school_email'],
-                'image' => $logoPath,
-                'user_id' => $user->id,
-                'lat' => $request->lat,
-                'lng' => $request->lng,
-            ]);
+            'school_name' => $validated['school_name'],
+            'address' => $validated['address'],
+            'school_email' => $validated['school_email'],
+            'image' => $logoPath,
+            'user_id' => $admin->id,
+            'lat' => $validated['lat'],
+            'lng' => $validated['lng'],
+            'principal' => $validated['principal'], // ✅ store principal name
+        ]);
 
-        $user->school_id = $school->id;
-        $user->save();
+        $admin->school_id = $school->id;
+        $admin->save();
 
-        return redirect()->route('admin.schools.show', $school)->with('success', 'School and Admin created.');
+        return redirect()->route('admin.schools.show', $school)->with('success', 'School and Admin created successfully.');
     }
 
-public function show(School $school)
-{
-    $school->load(['user', 'orders', 'users']);
-    $users = $school->users;
-    $activeUser = $school->user;
+    public function show(School $school)
+    {
+        $school->load(['user', 'orders', 'users']);
+        $users = $school->users;
+        $activeUser = $school->user;
 
-    return view('admin.schools.show', compact('school', 'users', 'activeUser'));
-}
-
-
-
+        return view('admin.schools.show', compact('school', 'users', 'activeUser'));
+    }
 
     public function edit(School $school)
     {
         $admin = $school->users()->where('role', 'school_admin')->first();
+
         return view('admin.schools.edit', compact('school', 'admin'));
     }
-
 
     public function update(Request $request, School $school)
     {
@@ -106,6 +110,7 @@ public function show(School $school)
             'logo' => 'nullable|image|max:2048',
             'lat' => 'required|numeric',
             'lng' => 'required|numeric',
+            'principal' => 'required|string|max:255',
 
             'admin_first_name' => 'required|string|max:255',
             'admin_last_name' => 'required|string|max:255',
@@ -115,36 +120,37 @@ public function show(School $school)
             'admin_password' => 'nullable|string|min:8|confirmed',
         ]);
 
-        $user = $school->school_admin;
-        $user->update([
-            'first_name' => $validated['admin_first_name'],
-            'last_name' => $validated['admin_last_name'],
-            'email' => $validated['admin_email'],
-            'cp_no' => $validated['admin_contact'],
-            'role' => $validated['admin_role'],
-            'password' => $validated['admin_password'] ? Hash::make($validated['admin_password']) : $user->password,
-        ]);
+        $admin = $school->users()->where('role', 'school_admin')->first();
+        $admin->first_name = $validated['admin_first_name'];
+        $admin->last_name = $validated['admin_last_name'];
+        $admin->email = $validated['admin_email'];
+        $admin->cp_no = $validated['admin_contact'];
+        $admin->role = $validated['admin_role'];
+        if (!empty($validated['admin_password'])) {
+            $admin->password = Hash::make($validated['admin_password']);
+        }
+        $admin->save();
 
         if ($request->hasFile('logo')) {
             $logoPath = $request->file('logo')->store('logos', 'public');
             $school->image = $logoPath;
         }
 
-
         $school->update([
             'school_name' => $validated['school_name'],
             'address' => $validated['address'],
             'school_email' => $validated['school_email'],
-            'lat' => $request->lat,
-            'lng' => $request->lng,
+            'lat' => $validated['lat'],
+            'lng' => $validated['lng'],
+            'principal' => $validated['principal'],
         ]);
 
         return redirect()->route('admin.schools.index')->with('success', 'School and Admin updated successfully.');
     }
+
     public function destroy(School $school)
     {
         $school->delete();
         return redirect()->route('admin.schools.index')->with('success', 'School deleted.');
     }
-
 }

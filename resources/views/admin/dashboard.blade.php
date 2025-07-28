@@ -52,55 +52,103 @@
         </div>
     </form>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-<div class="bg-white rounded-lg shadow p-6">
-    <div class="flex justify-between items-center text-sm text-gray-500">
-        <span>Revenue</span>
-        <span class="{{ $revenueChange >= 0 ? 'text-green-600' : 'text-red-600' }} font-semibold text-xs">
-            {{ $revenueChange >= 0 ? '+' : '' }}{{ $revenueChange ?? '0.00' }}%
-        </span>
-    </div>
-    <div class="text-3xl font-bold mt-2 text-gray-800">
-        ₱{{ number_format($totalRevenue ?? 0, 2) }}
-    </div>
-</div>
-
-<div class="bg-white rounded-lg shadow p-6">
-    <div class="flex justify-between items-center text-sm text-gray-500">
-        <span>Pending Orders</span>
-        <span class="{{ $pendingChange >= 0 ? 'text-red-600' : 'text-green-600' }} font-semibold text-xs">
-            {{ $pendingChange >= 0 ? '+' : '' }}{{ $pendingChange ?? '0.00' }}%
-        </span>
-    </div>
-    <div class="text-3xl font-bold mt-2 text-yellow-500">
-        {{ ($pendingOrders ?? 0) + ($customPending ?? 0) }}
-    </div>
-</div>
-
-<div class="bg-white rounded-lg shadow p-6">
-    <div class="flex justify-between items-center text-sm text-gray-500">
-        <span>Completed Orders</span>
-        <span class="{{ $completedChange >= 0 ? 'text-green-600' : 'text-red-600' }} font-semibold text-xs">
-            {{ $completedChange >= 0 ? '+' : '' }}{{ $completedChange ?? '0.00' }}%
-        </span>
-    </div>
-    <div class="text-3xl font-bold mt-2 text-green-600">
-        {{ ($completedOrders ?? 0) + ($customCompleted ?? 0) }}
-    </div>
-</div>
-
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">Sales Trend</h2>
-            <canvas id="salesTrendChart" class="w-full max-h-72"></canvas>
-
+            <div class="flex justify-between items-center text-sm text-gray-500">
+                <span>Total Revenue (This Year)</span>
+                <span class="{{ $revenueChange >= 0 ? 'text-green-600' : 'text-red-600' }} font-semibold text-xs">
+                    {{ $revenueChange >= 0 ? '+' : '' }}{{ number_format($revenueChange ?? 0, 2) }}%
+                </span>
+            </div>
+            <div class="text-3xl font-bold mt-2 text-gray-800">
+                ₱{{ number_format($totalRevenue ?? 0, 2) }}
+            </div>
         </div>
 
         <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">Top 10 Products</h2>
+            <div class="flex justify-between items-center text-sm text-gray-500">
+                <span>Monthly Revenue Change</span>
+                <span class="{{ $monthlyRevenueChange >= 0 ? 'text-green-600' : 'text-red-600' }} font-semibold text-xs">
+                    {{ $monthlyRevenueChange >= 0 ? '+' : '' }}{{ number_format($monthlyRevenueChange ?? 0, 2) }}%
+                </span>
+            </div>
+            <div class="text-3xl font-bold mt-2 text-gray-800">
+                @if(isset($monthlyRevenue))
+                    ₱{{ number_format($monthlyRevenue[Carbon\Carbon::now()->month - 1] ?? 0, 2) }}
+                @else
+                    ₱0.00
+                @endif
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex justify-between items-center text-sm text-gray-500">
+                <span>Pending Orders (This Year)</span>
+                <span class="{{ $pendingChange >= 0 ? 'text-red-600' : 'text-green-600' }} font-semibold text-xs">
+                    {{ $pendingChange >= 0 ? '+' : '' }}{{ number_format($pendingChange ?? 0, 2) }}%
+                </span>
+            </div>
+            <div class="text-3xl font-bold mt-2 text-yellow-500">
+                {{ ($pendingOrders ?? 0) + ($customPending ?? 0) }}
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex justify-between items-center text-sm text-gray-500">
+                <span>Completed Orders (This Year)</span>
+                <span class="{{ $completedChange >= 0 ? 'text-green-600' : 'text-red-600' }} font-semibold text-xs">
+                    {{ $completedChange >= 0 ? '+' : '' }}{{ number_format($completedChange ?? 0, 2) }}%
+                </span>
+            </div>
+            <div class="text-3xl font-bold mt-2 text-green-600">
+                {{ ($completedOrders ?? 0) + ($customCompleted ?? 0) }}
+            </div>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white rounded-lg shadow p-6 lg:col-span-2">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Sales Trend</h2>
+            <canvas id="salesTrendChart" class="w-full max-h-72"></canvas>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6 lg:col-span-1">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Orders Trend</h2>
+            <canvas id="ordersTrendChart" class="w-full max-h-72"></canvas>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Top 10 Products by Volume</h2>
             <canvas id="topProductsChart" class="w-full max-h-72 mt-6"></canvas>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Top Products List</h2>
+            <div class="h-[300px] overflow-y-auto">
+                <table class="w-full text-sm text-left">
+                    <thead>
+                        <tr class="text-gray-700 border-b">
+                            <th class="py-2 px-4">#</th>
+                            <th class="py-2 px-4">Product</th>
+                            <th class="py-2 px-4 text-right">Units Sold</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($topProducts as $index => $product)
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="py-2 px-4">{{ $index + 1 }}</td>
+                                <td class="py-2 px-4">{{ $product->product_name }}</td>
+                                <td class="py-2 px-4 text-right">{{ number_format($product->total) }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" class="text-center text-gray-500 py-4">No top products available</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -185,13 +233,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Chart Initialization (SALES & TOP PRODUCTS)
+    // Chart Initialization (SALES, ORDERS & TOP PRODUCTS)
     const salesLabels = @json($salesTrendLabels);
     const salesData = @json($salesTrendData);
+    const ordersData = @json($monthlyOrders);
     const topLabels = @json($topProductsLabels);
     const topData = @json($topProductsData);
 
     const salesCtx = document.getElementById('salesTrendChart')?.getContext('2d');
+    const ordersCtx = document.getElementById('ordersTrendChart')?.getContext('2d');
     const topCtx = document.getElementById('topProductsChart')?.getContext('2d');
 
     if (salesCtx && salesLabels?.length && salesData?.length) {
@@ -206,6 +256,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
                     tension: 0.4,
                     fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
+
+    // Orders Trend Chart
+    if (ordersCtx && salesLabels?.length && ordersData?.length) {
+        new Chart(ordersCtx, {
+            type: 'bar',
+            data: {
+                labels: salesLabels,
+                datasets: [{
+                    label: 'Orders',
+                    data: ordersData,
+                    backgroundColor: '#10B981'
                 }]
             },
             options: {

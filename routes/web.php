@@ -42,8 +42,6 @@ Route::middleware(['auth', IsAdmin::class])->group(function () {
     Route::get('/admin/orders/{id}', [OrderController::class, 'show'])->name('admin.orders.show');
     Route::get('/admin/orders/ajax', [OrderController::class, 'fetchOrders'])->name('admin.orders.ajax');
     Route::post('/admin/orders/update-status', [OrderController::class, 'updateOrderStatus'])->name('admin.orders.updateStatus');
-    Route::get('/admin/orders/{order}', [OrderController::class, 'adminShow'])
-        ->name('admin.orders.show');
     Route::get('/admin/custom-orders/{customOrder}', [OrderController::class, 'adminCustomShow'])
         ->name('admin.custom-orders.show');
     Route::get('/admin/custom-orders/{id}/quotation', [OrderController::class, 'showQuotation'])
@@ -69,8 +67,6 @@ Route::middleware(['auth', IsAdmin::class])->group(function () {
         Route::get('/{user}/typing-check', [AdminChatController::class, 'checkTyping'])->name('admin.chat.checkTyping');
     });
 
-
-
     // Product Management
     Route::prefix('admin/product')->name('product.')->group(function () {
         Route::get('/', [ProductController::class, 'index'])->name('index');
@@ -93,14 +89,13 @@ Route::middleware(['auth', IsAdmin::class])->group(function () {
     });
     // User Management per School
     Route::prefix('admin/users')->name('admin.users.')->group(function () {
-         Route::get('/', [UserManagementController::class, 'all'])->name('index');
+        Route::get('/', [UserManagementController::class, 'all'])->name('index');
         Route::get('/{school}', [UserManagementController::class, 'index'])->name('school');
         Route::get('/schools/user/create/{school}', [UserManagementController::class, 'create'])->name('create');
         Route::post('/{school}', [UserManagementController::class, 'store'])->name('store');
         Route::get('/schools/user/edit/{user}', [UserManagementController::class, 'edit'])->name('edit'); 
         Route::put('/{user}', [UserManagementController::class, 'update'])->name('update');
         Route::delete('/{user}', [UserManagementController::class, 'destroy'])->name('destroy');
-       
     });
 
 });

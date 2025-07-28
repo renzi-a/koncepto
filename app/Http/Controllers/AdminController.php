@@ -76,6 +76,37 @@ public function index(Request $request)
         return $normal + $custom;
     })->toArray();
 
+    // --- NEW: Monthly Orders calculation ---
+    $monthlyOrders = collect(range(1, 12))->map(function ($month) use ($startDate) {
+        $normalCount = Orders::where('status', 'delivered')
+            ->whereYear('created_at', $startDate->year)
+            ->whereMonth('created_at', $month)
+            ->count();
+        $customCount = CustomOrder::where('status', 'delivered')
+            ->whereYear('created_at', $startDate->year)
+            ->whereMonth('created_at', $month)
+            ->count();
+        return $normalCount + $customCount;
+    })->toArray();
+
+    // --- NEW: Monthly Revenue Change ---
+    $currentMonth = Carbon::now()->month;
+    $currentMonthIndex = $currentMonth - 1;
+    $monthlyRevenueChange = 0;
+    if ($currentMonthIndex > 0) {
+        $currentMonthRevenue = $monthlyRevenue[$currentMonthIndex] ?? 0;
+        $previousMonthRevenue = $monthlyRevenue[$currentMonthIndex - 1] ?? 0;
+        $monthlyRevenueChange = $previousMonthRevenue > 0 ? (($currentMonthRevenue - $previousMonthRevenue) / $previousMonthRevenue) * 100 : 0;
+    }
+    
+    // --- NEW: Monthly Orders Change ---
+    $monthlyOrdersChange = 0;
+    if ($currentMonthIndex > 0) {
+        $currentMonthOrders = $monthlyOrders[$currentMonthIndex] ?? 0;
+        $previousMonthOrders = $monthlyOrders[$currentMonthIndex - 1] ?? 0;
+        $monthlyOrdersChange = $previousMonthOrders > 0 ? (($currentMonthOrders - $previousMonthOrders) / $previousMonthOrders) * 100 : 0;
+    }
+
     $topProducts = DB::table('order_details')
         ->join('orders', 'order_details.order_id', '=', 'orders.id')
         ->join('products', 'order_details.product_id', '=', 'products.id')
@@ -99,26 +130,26 @@ public function index(Request $request)
         return $school;
     });
 
-$schoolSales->transform(function ($school) use ($startDate, $endDate) {
-    $normalRevenue = OrderDetail::whereHas('order', function ($query) use ($school, $startDate, $endDate) {
-        $query->where('status', 'delivered')
-              ->whereBetween('created_at', [$startDate, $endDate])
-              ->whereHas('user', function ($q) use ($school) {
-                  $q->where('school_id', $school->id);
-              });
-    })->sum(DB::raw('price * quantity'));
+    $schoolSales->transform(function ($school) use ($startDate, $endDate) {
+        $normalRevenue = OrderDetail::whereHas('order', function ($query) use ($school, $startDate, $endDate) {
+            $query->where('status', 'delivered')
+                  ->whereBetween('created_at', [$startDate, $endDate])
+                  ->whereHas('user', function ($q) use ($school) {
+                      $q->where('school_id', $school->id);
+                  });
+        })->sum(DB::raw('price * quantity'));
 
-    $customRevenue = \App\Models\CustomOrderItem::whereHas('customOrder', function ($query) use ($school, $startDate, $endDate) {
-        $query->where('status', 'delivered')
-              ->whereBetween('created_at', [$startDate, $endDate])
-              ->whereHas('user', function ($q) use ($school) {
-                  $q->where('school_id', $school->id);
-              });
-    })->sum('total_price');
+        $customRevenue = \App\Models\CustomOrderItem::whereHas('customOrder', function ($query) use ($school, $startDate, $endDate) {
+            $query->where('status', 'delivered')
+                  ->whereBetween('created_at', [$startDate, $endDate])
+                  ->whereHas('user', function ($q) use ($school) {
+                      $q->where('school_id', $school->id);
+                  });
+        })->sum('total_price');
 
-    $school->total_revenue = $normalRevenue + $customRevenue;
-    return $school;
-});
+        $school->total_revenue = $normalRevenue + $customRevenue;
+        return $school;
+    });
 
 
     $previousStart = (clone $startDate)->subYear();
@@ -145,7 +176,7 @@ $schoolSales->transform(function ($school) use ($startDate, $endDate) {
     ->count();
 
     
-$previousCustomPending = CustomOrder::whereIn('status', [
+    $previousCustomPending = CustomOrder::whereIn('status', [
         'to_be_quoted',
         'quoted',
         'approved',
@@ -164,45 +195,48 @@ $previousCustomPending = CustomOrder::whereIn('status', [
     ->whereBetween('created_at', [$previousStart, $previousEnd])
     ->count();
 
-$previousCustomCompleted = CustomOrder::where('status', 'delivered')
-    ->whereBetween('created_at', [$previousStart, $previousEnd])
+    $previousCustomCompleted = CustomOrder::where('status', 'delivered')
+    ->whereBetween('created_at', [$previousStart, $endDate])
     ->count();
 
-$previousCompletedTotal = $previousCompletedOrders + $previousCustomCompleted;
-$currentCompletedTotal = $completedOrders + $customCompleted;
+    $previousCompletedTotal = $previousCompletedOrders + $previousCustomCompleted;
+    $currentCompletedTotal = $completedOrders + $customCompleted;
 
-$completedChange = $previousCompletedTotal > 0
-    ? (($currentCompletedTotal - $previousCompletedTotal) / $previousCompletedTotal) * 100
-    : 0;
-$products = Product::with('category')->get();
-$salesTrendLabels = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-];
-$salesTrendData = $monthlyRevenue;
+    $completedChange = $previousCompletedTotal > 0
+        ? (($currentCompletedTotal - $previousCompletedTotal) / $previousCompletedTotal) * 100
+        : 0;
+    $products = Product::with('category')->get();
+    $salesTrendLabels = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    $salesTrendData = $monthlyRevenue;
 
-$topProductsLabels = $topProducts->pluck('product_name')->toArray();
-$topProductsData = $topProducts->pluck('total')->toArray();
+    $topProductsLabels = $topProducts->pluck('product_name')->toArray();
+    $topProductsData = $topProducts->pluck('total')->toArray();
 
-return view('admin.dashboard', [
-    'pendingOrders' => $pendingOrders,
-    'completedOrders' => $completedOrders,
-    'customPending' => $customPending,
-    'customCompleted' => $customCompleted,
-    'totalRevenue' => $totalRevenue,
-    'previousRevenue' => $previousRevenue,
-    'revenueChange' => $revenueChange,
-    'pendingChange' => $pendingChange,
-    'completedChange' => $completedChange,
-    'monthlyRevenue' => $monthlyRevenue,
-    'topProducts' => $topProducts,
-    'schoolSales' => $schoolSales,
-    'products' => $products,
-    'salesTrendLabels' => $salesTrendLabels,
-    'salesTrendData' => $salesTrendData,
-    'topProductsLabels' => $topProductsLabels,
-    'topProductsData' => $topProductsData,
-]);
+    return view('admin.dashboard', [
+        'pendingOrders' => $pendingOrders,
+        'completedOrders' => $completedOrders,
+        'customPending' => $customPending,
+        'customCompleted' => $customCompleted,
+        'totalRevenue' => $totalRevenue,
+        'previousRevenue' => $previousRevenue,
+        'revenueChange' => $revenueChange,
+        'pendingChange' => $pendingChange,
+        'completedChange' => $completedChange,
+        'monthlyRevenue' => $monthlyRevenue,
+        'monthlyRevenueChange' => $monthlyRevenueChange, // NEW
+        'monthlyOrders' => $monthlyOrders,             // NEW
+        'monthlyOrdersChange' => $monthlyOrdersChange, // NEW
+        'topProducts' => $topProducts,
+        'schoolSales' => $schoolSales,
+        'products' => $products,
+        'salesTrendLabels' => $salesTrendLabels,
+        'salesTrendData' => $salesTrendData,
+        'topProductsLabels' => $topProductsLabels,
+        'topProductsData' => $topProductsData,
+    ]);
 
 }
 

@@ -99,4 +99,12 @@ public function all(Request $request)
 
     return view('admin.user', compact('users', 'schools'));
 }
+
+public function destroy(User $user)
+{
+    $user->delete();
+
+    return redirect()->back()->with('success', 'User deleted successfully.');
+}
+
 }

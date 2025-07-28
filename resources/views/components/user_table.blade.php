@@ -21,8 +21,9 @@
                             <a href="{{ route('admin.users.edit', $user->id) }}">
                                 <img src="{{ asset('images/icons/edit.png') }}" class="w-5 h-5" />
                             </a>
-                            <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" onsubmit="return confirm('Delete this user?');">
-                                @csrf @method('DELETE')
+                                <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" onsubmit="return confirm('Delete this user?');">
+                                    @csrf
+                                    @method('DELETE')
                                 <button type="submit">
                                     <img src="{{ asset('images/icons/delete.png') }}" class="w-5 h-5" />
                                 </button>

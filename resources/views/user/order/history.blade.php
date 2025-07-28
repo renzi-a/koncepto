@@ -33,36 +33,41 @@
                     <ul class="space-y-2">
                         @foreach ($orders as $order)
                             <li class="border rounded p-4 flex justify-between items-center
-                                {{ $order['type'] === 'custom' ? 'bg-red-50' : 'bg-gray-50' }}">
+                                {{ ($order->order_status === 'Cancelled' || ($order->status ?? null) === 'cancelled') ? 'bg-red-50' : 'bg-gray-50' }}">
                                 <div class="flex items-center space-x-4">
-                                    <input type="checkbox" name="orders[]" value="{{ $order['id'] }}" class="order-checkbox form-checkbox h-5 w-5 text-blue-600" @change="updateSelection()">
+                                    <input type="checkbox" name="orders[]" value="{{ $order->id }}" class="order-checkbox form-checkbox h-5 w-5 text-blue-600" @change="updateSelection()">
                                     <div>
                                         <p>
                                             <strong class="text-gray-900">
-                                                {{ $order->order_type === 'custom' ? 'Custom Order #' . $order->original_order_id : 'Order #' . $order->original_order_id }}
+                                                @if ($order->type === 'custom')
+                                                    Custom Order #{{ $order->id }}
+                                                @else
+                                                    Order #{{ $order->id }}
+                                                @endif
                                             </strong>
                                         </p>
                                         <p class="text-sm text-gray-600">
                                             Status:
-                                            <span class="{{ $order['status'] === 'cancelled' ? 'text-red-600' : 'text-green-600' }}">
-                                                {{ ucfirst($order['status']) }}
+                                            @php
+                                                $status = $order->order_status ?? ucfirst($order->status);
+                                            @endphp
+                                            <span class="{{ ($status === 'Cancelled') ? 'text-red-600' : 'text-green-600' }}">
+                                                {{ $status }}
                                             </span>
                                         </p>
                                         <p class="text-sm text-gray-600">
-                                            {{ ucfirst($order['status']) }}: {{ \Carbon\Carbon::parse($order['created_at'])->format('M d, Y') }}
+                                            Date: {{ \Carbon\Carbon::parse($order->created_at)->format('M d, Y') }}
                                         </p>
                                     </div>
                                 </div>
                                 <div class="flex items-center space-x-4">
-                                    <a href="{{ $order['status'] === 'cancelled'
-                                        ? route('user.order-history-show', $order['id']) 
-                                        : ($order['order_type'] === 'custom' 
-                                            ? route('custom-orders.show', $order['id']) 
-                                            : route('user.order.show', $order['id'])) }}" 
+                                    <a href="{{ $order->type === 'custom' 
+                                            ? route('user.custom-orders.show', $order->id) 
+                                            : route('user.order.show', $order->id) }}" 
                                         class="text-blue-600 hover:underline text-sm">
                                         View Details
-                                    </a>  
-                                    <form method="POST" action="{{ route('user.orders.destroy', $order['id']) }}" onsubmit="return confirm('Are you sure you want to delete this order?');" class="inline">
+                                    </a>
+                                    <form method="POST" action="{{ route('user.orders.destroy', $order->id) }}" onsubmit="return confirm('Are you sure you want to delete this order?');" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" 
