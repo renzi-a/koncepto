@@ -1,26 +1,34 @@
 <x-layout>
-    <div class="container mx-auto px-6 py-8 space-y-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h1 class="text-2xl font-bold text-gray-800">Gathering Items for Order #C{{ $order->id }}</h1>
-                    <a href="{{ route('admin.orders') }}" 
-                    class="text-sm text-blue-600 hover:underline">
-                        ← Back to orders
-                    </a>
-                </div>
-        @php
-            $totalItems = $items->count();
-            $gatheredItems = $items->where('gathered', true)->count();
-        @endphp
+    <div class="container mx-auto px-6 py-8 space-y-6"
+        x-data="{ totalItems: {{ (int) $totalItems }}, gatheredItems: {{ (int) $gatheredItems }}, showModal: false }">
 
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-4">
+            <h1 class="text-2xl font-bold text-gray-800">
+                Gathering Items for Order #C{{ $order->id }}
+            </h1>
+            <a href="{{ route('admin.orders') }}"
+                class="text-sm text-blue-600 hover:underline">
+                ← Back to orders
+            </a>
+        </div>
+
+        <!-- Counters -->
         <p class="text-sm text-gray-700 mb-4">
-            Gathered: <strong class="text-green-600">{{ $gatheredItems }}</strong> of 
-            <strong>{{ $totalItems }}</strong> items
+            Gathered:
+            <strong class="text-green-600" x-text="gatheredItems"></strong> of
+            <strong x-text="totalItems"></strong> items
         </p>
+
+        <!-- Main Card -->
         <div class="bg-white p-6 rounded-xl shadow">
+            <!-- School Info -->
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center gap-4">
                     @if($order->user && $order->user->school && $order->user->school->image)
-                        <img src="{{ asset('storage/' . $order->user->school->image) }}" alt="School Logo" class="w-16 h-16 object-cover rounded-full border">
+                        <img src="{{ asset('storage/' . $order->user->school->image) }}"
+                                alt="School Logo"
+                                class="w-16 h-16 object-cover rounded-full border">
                     @else
                         <div class="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-sm">
                             No Logo
@@ -43,10 +51,11 @@
                     target="_blank"
                     class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded">
                     View PDF
-                    </a>
+                </a>
             </div>
 
-            <form method="POST" action="#">
+            <!-- Table -->
+            <form method="POST" action="{{ route('admin.custom-orders.gather.store', $order->id) }}">
                 @csrf
                 <div class="overflow-x-auto mt-4">
                     <table class="min-w-full table-auto border text-sm text-gray-700">
@@ -73,7 +82,12 @@
                                     $total = $price * $quantity;
                                     $grandTotal += $total;
                                 @endphp
-                                <tr class="border-t">
+                                <tr class="border-t transition-colors"
+                                    :class="{ 'bg-red-100': !{{ $item->gathered ? 'true' : 'false' }}, 
+                                              'hover:bg-gray-50': {{ $item->gathered ? 'true' : 'false' }},
+                                              'hover:bg-red-200': !{{ $item->gathered ? 'true' : 'false' }} }"
+                                    x-data="{ gathered: {{ $item->gathered ? 'true' : 'false' }} }"
+                                    :id="'item-row-{{ $item->id }}'">
                                     <td class="px-4 py-2">{{ $index + 1 }}</td>
                                     <td class="px-4 py-2">{{ $item->name }}</td>
                                     <td class="px-4 py-2">{{ $item->brand ?? '-' }}</td>
@@ -81,7 +95,9 @@
                                     <td class="px-4 py-2">{{ $item->quantity }}</td>
                                     <td class="px-4 py-2">
                                         @if (!empty($item->photo))
-                                            <img src="{{ asset('storage/' . $item->photo) }}" alt="Photo" class="w-12 h-12 object-cover rounded border">
+                                            <img src="{{ asset('storage/' . $item->photo) }}" 
+                                                    alt="Photo" 
+                                                    class="w-12 h-12 object-cover rounded border">
                                         @else
                                             <span class="text-gray-400">No Image</span>
                                         @endif
@@ -104,11 +120,11 @@
                                     <td class="px-4 py-2 text-center">
                                         <input
                                             type="checkbox"
-                                            x-data="{ gathered: {{ $item->gathered ? 'true' : 'false' }} }"
                                             :checked="gathered"
                                             @change="
                                                 gathered = !gathered;
-                                                fetch('{{ route('admin.custom-orders.toggle-gathered', $item->id) }}', {
+                                                const url = '{{ route('admin.custom-orders.toggle-gathered', $item->id) }}';
+                                                fetch(url, {
                                                     method: 'POST',
                                                     headers: {
                                                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -116,6 +132,20 @@
                                                         'Content-Type': 'application/json'
                                                     },
                                                     body: JSON.stringify({ gathered })
+                                                }).then(response => {
+                                                    if (response.ok) {
+                                                        if (gathered) {
+                                                            gatheredItems++;
+                                                            $el.closest('tr').classList.remove('bg-red-100');
+                                                            $el.closest('tr').classList.remove('hover:bg-red-200');
+                                                            $el.closest('tr').classList.add('hover:bg-gray-50');
+                                                        } else {
+                                                            gatheredItems--;
+                                                            $el.closest('tr').classList.add('bg-red-100');
+                                                            $el.closest('tr').classList.add('hover:bg-red-200');
+                                                            $el.closest('tr').classList.remove('hover:bg-gray-50');
+                                                        }
+                                                    }
                                                 });
                                             "
                                             class="form-checkbox text-green-600"
@@ -132,35 +162,35 @@
                     </table>
                 </div>
 
+                <!-- Save Button -->
                 <div class="mt-6 flex justify-end">
                     <button type="button"
-                        @click="showModal = true"
-                        class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-                        Save Gathering Info
+                            @click="showModal = true"
+                            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                        Save
                     </button>
                 </div>
 
-                <div x-data="{ showModal: false }">
-                    <template x-if="showModal">
-                        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                            <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm">
-                                <h2 class="text-lg font-semibold mb-4">Confirm Save</h2>
-                                <p class="text-gray-600 mb-6">Are you sure you want to save this gathering update?</p>
+                <!-- Confirmation Modal -->
+                <template x-if="showModal">
+                    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                        <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm">
+                            <h2 class="text-lg font-semibold mb-4">Confirm Save</h2>
+                            <p class="text-gray-600 mb-6">Are you sure you want to save this gathering update?</p>
 
-                                <div class="flex justify-end gap-4">
-                                    <button @click="showModal = false" type="button"
+                            <div class="flex justify-end gap-4">
+                                <button @click="showModal = false" type="button"
                                         class="text-gray-600 hover:text-gray-800">
-                                        Cancel
-                                    </button>
-                                    <button type="submit"
+                                    Cancel
+                                </button>
+                                <button type="submit"
                                         class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
-                                        Confirm
-                                    </button>
-                                </div>
+                                    Confirm
+                                </button>
                             </div>
                         </div>
-                    </template>
-                </div>
+                    </div>
+                </template>
             </form>
         </div>
     </div>

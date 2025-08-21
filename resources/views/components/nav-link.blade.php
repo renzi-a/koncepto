@@ -36,7 +36,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <div class="flex items-center justify-between w-full max-w-screen-xl mx-auto gap-4">
         <a href="{{ route('user.home') }}" class="flex-shrink-0">
-            <img src="{{ asset('images/logo2.png')}}" alt="logo" class="w-[134px]" />
+            <img src="{{ asset('images/logo.png')}}" alt="logo" class="w-[134px]" />
         </a>
 
         <div class="flex-grow max-w-2xl w-full mx-4">

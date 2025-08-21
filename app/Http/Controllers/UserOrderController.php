@@ -54,6 +54,7 @@ public function show(Request $request, Orders $order)
     $search = $request->input('search');
 
     $orderDetails = $order->orderDetails()->with('product')->get();
+    
     $allItems = $orderDetails->map(function ($detail) {
         $product = $detail->product;
         return [
@@ -63,6 +64,7 @@ public function show(Request $request, Orders $order)
             'description' => $product->description ?? 'N/A',
             'photo' => $product->image ?? null,
             'quantity' => $detail->quantity,
+            'price' => $detail->price, // <-- ADDED THIS LINE
         ];
     });
 

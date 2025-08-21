@@ -78,7 +78,7 @@
      <div class="text-white mt-16 flex-col space-y-2 w-full h-[calc(100vh)] px-4" x-data="{ open: {{ request()->routeIs('product.*') || request()->is('admin/ads*') ? 'true' : 'false' }} }">
         <div id="profile" class="text-center space-y-2 mb-4">
           <div class="pb-3">
-            <img src="{{ asset('images/logo2.png') }}" alt="User Avatar" class="w-[120px] md:w-[140px] lg:w-[180px] mx-auto rounded-full"/>
+            <img src="{{ asset('images/logo.png') }}" alt="User Avatar" class="w-[120px] md:w-[140px] lg:w-[180px] mx-auto rounded-full"/>
           </div>
           @auth
             <h2 class="font-semibold text-xl lg:text-2xl">{{ Auth::user()->first_name }} {{ Auth::user()->last_name }}</h2>
@@ -96,15 +96,12 @@
 
   <p class="text-white/70 font-semibold uppercase text-sm mt-4">Product Management</p>
 
-  <x-side-link class="sidebar-link" href="{{ route('product.index') }}" :active="request()->routeIs('product.*')">
+  <x-side-link class="sidebar-link no-ajax" href="{{ route('product.index') }}" :active="request()->routeIs('product.*')">
     <img src="{{ asset('images/product.png') }}" alt="Product Icon" class="w-6 h-6 inline-block mr-3 ms-20">
     Products
   </x-side-link>
 
-  <x-side-link class="sidebar-link" href="{{ route('admin.ads') }}" :active="request()->is('admin/ads*')">
-    <img src="{{ asset('images/ads.png') }}" alt="Ads Icon" class="w-6 h-6 inline-block mr-3 ms-20">
-    Ads
-  </x-side-link>
+
 
   <p class="text-white/70 font-semibold uppercase text-sm mt-4">User Management</p>
 
@@ -131,6 +128,11 @@
   </x-side-link>
 
   <p class="text-white/70 font-semibold uppercase text-sm mt-4">Apps</p>
+
+    <x-side-link class="sidebar-link" href="{{ route('admin.ads') }}" :active="request()->is('admin/ads*')">
+    <img src="{{ asset('images/ads.png') }}" alt="Ads Icon" class="w-6 h-6 inline-block mr-3 ms-20">
+    Ads
+  </x-side-link>
 
   <x-side-link class="sidebar-link"  href="{{ route('admin.chat.index') }}" :active="request()->is('admin/chat*')">
     <img src="{{ asset('images/chat.png') }}" alt="Chat Icon" class="w-6 h-6 inline-block mr-3 ms-20">

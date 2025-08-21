@@ -31,7 +31,7 @@
         <div class="flex items-center justify-between w-full max-w-screen-xl mx-auto gap-4">
             
             <a href="#" class="flex-shrink-0">
-                <img src="{{ asset('images/logo2.png')}}" alt="logo" class="w-[134px]" />
+                <img src="{{ asset('images/logo.png')}}" alt="logo" class="w-[134px]" />
             </a>
 
             <div class="flex-grow max-w-2xl w-full mx-4">
@@ -90,7 +90,7 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 flex-1">
                         @forelse ($products as $product)
-                            <div class="group relative bg-white p-2 rounded-lg shadow-sm hover:shadow-md transition">
+                            <a href="{{ route('login') }}" class="group relative bg-white p-2 rounded-lg shadow-sm hover:shadow-md transition">
                                 <img src="{{ asset('storage/' . $product->image) }}"
                                     alt="{{ $product->productName }}"
                                     class="aspect-square w-full rounded-md bg-gray-200 object-cover group-hover:opacity-75" />
@@ -101,7 +101,7 @@
                                     </div>
                                     <p class="text-sm font-bold text-gray-900">₱{{ number_format($product->price, 2) }}</p>
                                 </div>
-                            </div>
+                            </a>
                         @empty
                             <p class="text-gray-500">No products found.</p>
                         @endforelse

@@ -297,6 +297,7 @@ public function approve(Request $request, $id)
 
 public function gatherView($id)
 {
+        
     $order = CustomOrder::with(['items', 'user.school'])->findOrFail($id);
     $items = $order->items;
 

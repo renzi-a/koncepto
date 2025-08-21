@@ -40,13 +40,6 @@
                         <div class="space-y-1 text-sm text-gray-700">
                         <div class="text-sm text-gray-700 space-y-1">
                             <p><span class="font-semibold">Total Orders:</span> {{ $school->orders_count }}</p>
-                            <p>
-                                <span class="font-semibold">Total Users:</span>
-                                {{ $school->users_count }} |
-                                <span class="text-gray-600">Admins:</span> {{ $school->admin_count }} |
-                                <span class="text-gray-600">Teachers:</span> {{ $school->teacher_count }} |
-                                <span class="text-gray-600">Students:</span> {{ $school->student_count }}
-                            </p>
                         </div>
 
                         </div>

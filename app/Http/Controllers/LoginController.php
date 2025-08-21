@@ -22,7 +22,7 @@ class LoginController extends Controller
         if ($user->role === 'admin') {
             return redirect()->route('admin.dashboard');
         } elseif ($user->role === 'school_admin') {
-            return redirect()->route('user.home');
+            return redirect()->route('user.dashboard');
         } else {
             Auth::logout();
             return redirect('/login')->withErrors(['role' => 'Unauthorized role.']);

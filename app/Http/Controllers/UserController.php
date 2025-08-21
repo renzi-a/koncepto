@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Carbon\Carbon;
 
 class UserController extends Controller
 {
@@ -48,8 +49,72 @@ class UserController extends Controller
     public function viewProduct($id)
     {
         $product = Product::findOrFail($id);
-        return view('user.view_product', compact('product'));
+        $similarKeywords = [];
+        if (preg_match('/^(.+?)\s+(GI-\d+)/i', $product->productName, $matches)) {
+            $similarKeywords[] = trim($matches[1] . ' ' . $matches[2]);
+        } else {
+            $nameParts = explode(' ', $product->productName);
+            if (count($nameParts) >= 2) {
+                $similarKeywords[] = $nameParts[0] . ' ' . $nameParts[1];
+            } else {
+                $similarKeywords[] = $product->productName;
+            }
+        }
+
+        if (!empty($product->brandName) && !in_array(strtolower($product->brandName), array_map('strtolower', $similarKeywords))) {
+            $similarKeywords[] = $product->brandName;
+        }
+
+        $similarProducts = Product::query()
+            ->where('id', '!=', $product->id)
+            ->where(function ($query) use ($similarKeywords) {
+                foreach ($similarKeywords as $keyword) {
+                    $query->orWhere('productName', 'like', '%' . $keyword . '%')
+                          ->orWhere('brandName', 'like', '%' . $keyword . '%');
+                }
+            })
+            ->inRandomOrder()
+            ->limit(4)
+            ->get();
+
+
+        $relatedKeywords = collect(explode(' ', strtolower($product->productName . ' ' . $product->brandName)))
+            ->filter(function($word) {
+                return strlen($word) > 2 && !in_array($word, [
+                    'the', 'and', 'for', 'with', 'from', 'a', 'an', 'of', 'to', 'in', 'on', 'is',
+                    'ink', 'paper', 'set', 'pack', 'color', 'black', 'white', 'blue', 'red', 'green',
+                    'original', 'genuine', 'compatible', 'new', 'old', 'good', 'best', 'high', 'low',
+                    'plus', 'pro', 'max', 'mini', 'standard', 'regular', 'premium', 'ultra',
+                    'multi', 'single', 'bundle', 'kit', 'case', 'box', 'piece', 'ream', 'sheet',
+                    'item', 'product', 'material', 'office', 'school', 'home', 'store', 'shop',
+                ]);
+            })
+            ->unique()
+            ->values();
+
+        $relatedProducts = Product::query()
+            ->where('id', '!=', $product->id)
+            ->where(function ($query) use ($product, $relatedKeywords, $similarProducts) {
+                if ($product->category_id) {
+                    $query->orWhere('category_id', $product->category_id);
+                }
+
+                if ($relatedKeywords->isNotEmpty()) {
+                    foreach ($relatedKeywords as $keyword) {
+                        $query->orWhere('productName', 'like', '%' . $keyword . '%')
+                              ->orWhere('brandName', 'like', '%' . $keyword . '%');
+                    }
+                }
+            })
+            ->whereNotIn('id', $similarProducts->pluck('id')->toArray())
+            ->inRandomOrder()
+            ->limit(4)
+            ->get();
+
+
+        return view('user.view_product', compact('product', 'similarProducts', 'relatedProducts'));
     }
+
 
     public function showNotifications()
     {
@@ -78,13 +143,16 @@ class UserController extends Controller
 
         return response()->json(['status' => 'marked']);
     }
-public function dashboard()
+    
+        public function dashboard(Request $request)
     {
-    $school = Auth::user()->school;
+        $school = Auth::user()->school;
+        $year = $request->input('year', Carbon::now()->year);
 
-    $regularOrders = $school ? $school->orders : collect();
-    $customOrders = $school ? $school->customOrder : collect();
-        
+        // Filter orders by the selected year, specifying the table for `created_at`
+        $regularOrders = $school ? $school->orders()->whereYear('created_at', $year)->get() : collect();
+        $customOrders = $school ? $school->customOrder()->whereYear('custom_orders.created_at', $year)->get() : collect();
+            
         $allOrders = $regularOrders->merge($customOrders);
         $totalOrders = $allOrders->count();
 
@@ -95,32 +163,44 @@ public function dashboard()
         $regularOrderCount = $regularOrders->count();
         $customOrderCount = $customOrders->count();
 
-        // Add new counts for the dashboard
-        $studentCount = $school ? $school->students()->count() : 0;
-        $teacherCount = $school ? $school->teachers()->count() : 0;
-        $customOrderItemsCount = $customOrders->flatMap(fn ($order) => $order->items)->count();
+        $regularItemsCount = $regularOrders->sum('quantity');
+        $customItemsCount = $customOrders->flatMap(fn ($order) => $order->items)->count();
+        $totalItemsCount = $regularItemsCount + $customItemsCount;
 
-        // Fetch recent orders by merging and sorting the collections
-        $recentOrders = $regularOrders->take(5)->map(function ($order) {
+        $pendingRegularOrders = $regularOrders->where('status', '!=', 'delivered')->count();
+        $pendingCustomOrders = $customOrders->where('status', '!=', 'delivered')->count();
+        $pendingOrdersCount = $pendingRegularOrders + $pendingCustomOrders;
+
+        $recentOrders = $regularOrders->sortByDesc('created_at')->take(5)->map(function ($order) {
             $order->type = 'Regular';
             return $order;
         });
 
-        $recentCustomOrders = $customOrders->take(5)->map(function ($order) {
+        $recentCustomOrders = $customOrders->sortByDesc('created_at')->take(5)->map(function ($order) {
             $order->type = 'Custom';
             return $order;
         });
-        
+            
         $combinedRecentOrders = $recentOrders->merge($recentCustomOrders)->sortByDesc('created_at')->take(5);
-
-        // Prepare monthly sales data by combining counts from both order types
-        $salesLabels = ['Jan', 'Feb', 'Mar', 'Apr'];
+        
+        $salesLabels = [];
         $salesData = [];
-        foreach ($salesLabels as $index => $month) {
-            $monthNumber = $index + 1;
-            $regularCount = $regularOrders->where('created_at', '>=', now()->subMonths(4))->where('created_at', 'like', "%-{$monthNumber}-%")->count();
-            $customCount = $customOrders->where('created_at', '>=', now()->subMonths(4))->where('created_at', 'like', "%-{$monthNumber}-%")->count();
-            $salesData[] = $regularCount + $customCount;
+
+        if ($allOrders->isNotEmpty()) {
+            $firstOrderDate = $allOrders->min('created_at');
+            $lastOrderDate = $allOrders->max('created_at');
+
+            $startMonth = Carbon::parse($firstOrderDate)->startOfMonth();
+            $endMonth = Carbon::parse($lastOrderDate)->startOfMonth();
+
+            for ($date = $startMonth; $date->lte($endMonth); $date->addMonth()) {
+                $salesLabels[] = $date->format('M');
+                
+                $monthlyRegularCount = $regularOrders->filter(fn ($order) => Carbon::parse($order->created_at)->isSameMonth($date))->count();
+                $monthlyCustomCount = $customOrders->filter(fn ($order) => Carbon::parse($order->created_at)->isSameMonth($date))->count();
+                
+                $salesData[] = $monthlyRegularCount + $monthlyCustomCount;
+            }
         }
 
         return view('user.dashboard', compact(
@@ -128,16 +208,14 @@ public function dashboard()
             'deliveredOrders',
             'regularOrderCount',
             'customOrderCount',
-            'studentCount',
-            'teacherCount',
-            'customOrderItemsCount',
+            'totalItemsCount',
+            'pendingOrdersCount',
             'combinedRecentOrders',
             'salesLabels',
-            'salesData'
+            'salesData',
+            'year'
         ));
     }
-
-
     public function profile()
     {
         return view('user.profile');
@@ -177,45 +255,11 @@ public function dashboard()
         return back()->with('success', 'Profile updated successfully.');
     }
 
-public function users(Request $request)
-{
-    $school = Auth::user()->school;
-
-    if (!$school) {
-        abort(403, 'No school associated with this user.');
+    public function showCustomOrder(CustomOrder $order)
+    {
+        $this->authorize('view', $order); 
+        $order->load('items');
+        return view('user.custom-order-detail', compact('order'));
     }
-
-    $query = User::where('school_id', $school->id)
-        ->where('role', '!=', 'admin');
-
-    if ($request->filled('search')) {
-        $search = $request->input('search');
-        $query->where(function ($q) use ($search) {
-            $q->where('first_name', 'like', "%$search%")
-              ->orWhere('last_name', 'like', "%$search%")
-              ->orWhere('email', 'like', "%$search%");
-        });
-    }
-
-    if ($request->filled('role')) {
-        $query->where('role', $request->role);
-    }
-
-    $users = $query->latest()->paginate(10);
-
-    if ($request->ajax()) {
-        $html = view('components.user_table', compact('users'))->render();
-        return response()->json(['html' => $html]);
-    }
-
-    return view('user.users', compact('users', 'school'));
-}
-
-public function showCustomOrder(CustomOrder $order)
-{
-    $this->authorize('view', $order); 
-    $order->load('items');
-    return view('user.custom-order-detail', compact('order'));
-}
 
 }

@@ -86,88 +86,74 @@
             <p class="text-base text-white/70">{{ Auth::user()->school->school_name ?? 'N/A' }}</p>
           @endauth
         </div>
-
-    <nav class="space-y-1.5 pt-4 text-sm font-medium">
-      <a href="{{ route('user.dashboard') }}"
-        class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.dashboard') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
-        <img src="{{ asset('images/dashboard.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Dashboard
-      </a>
-
-      <p class="text-white/70 font-semibold uppercase text-sm mt-4">Account</p>
-      <a href="{{ route('user.profile') }}"
-        class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.profile') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
-        <img src="{{ asset('images/user.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Profile Settings
-      </a>
-      
-      <a href="{{ route('user.users') }}"
-      class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.users') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
-      <img src="{{ asset('images/users.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Users
-    </a>
-
-
-      <p class="text-white/70 font-semibold uppercase text-sm mt-4">Orders</p>
-
-      <a href="{{ route('user.order.index') }}"
-        class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.order.index') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
-        <img src="{{ asset('images/order.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Orders
-      </a>
-
-      <a href="{{ route('user.order-request') }}"
-        class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.order.request') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
-        <img src="{{ asset('images/request.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Order Request
-      </a>
-
-      <a href="{{ route('user.track-order') }}"
-        class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.order.track') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
-        <img src="{{ asset('images/track.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Track Order
-      </a>
-
-      <a href="{{ route('user.order-history') }}"
-        class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.order.history') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
-        <img src="{{ asset('images/history.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Order History
-      </a>
-
-      <p class="text-white/70 font-semibold uppercase text-sm mt-4">Apps</p>
-      <a href="{{ route('user.chat.full') }}"
-        class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.chat.full') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
-        <img src="{{ asset('images/chat.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Chat
-      </a>
-    </nav>
-
-    <a href="#" @click.prevent="showLogoutModal = true"
-  class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 bg-[#56AB2F]">
-  <img src="{{ asset('images/logout.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Log Out
-</a>
-  </div>
-</aside>
-
-
-    <main id="main-content" class="flex-1 ml-[23rem] h-screen overflow-y-auto bg-[#F0F4F9] p-6">
-      <div class="w-full h-16 bg-white flex items-center justify-between px-6 mb-6">
-        <a href="{{ route('user.home') }}"
-          class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-white bg-gray-200 hover:bg-gray-600 px-4 py-1.5 rounded-md transition">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h18M3 12l6-6M3 12l6 6" />
-            </svg>
-            Home
+        <nav class="space-y-1.5 pt-4 text-sm font-medium">
+          <a href="{{ route('user.dashboard') }}"
+            class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.dashboard') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
+            <img src="{{ asset('images/dashboard.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Dashboard
+          </a>
+          <p class="text-white/70 font-semibold uppercase text-sm mt-4">Account</p>
+          <a href="{{ route('user.profile') }}"
+            class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.profile') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
+            <img src="{{ asset('images/user.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Profile Settings
+          </a>
+          <p class="text-white/70 font-semibold uppercase text-sm mt-4">Orders</p>
+          <a href="{{ route('user.order.index') }}"
+            class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.order.index') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
+            <img src="{{ asset('images/order.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Orders
+          </a>
+          <a href="{{ route('user.track-order') }}"
+            class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.order.track') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
+            <img src="{{ asset('images/track.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Track Order
+          </a>
+          <a href="{{ route('user.order-history') }}"
+            class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.order.history') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
+            <img src="{{ asset('images/history.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Order History
+          </a>
+          <p class="text-white/70 font-semibold uppercase text-sm mt-4">Apps</p>
+          <a href="{{ route('user.chat.full') }}"
+            class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 {{ request()->routeIs('user.chat.full') ? 'bg-[#3E8E24] scale-105 translate-x-1' : 'bg-[#56AB2F]' }}">
+            <img src="{{ asset('images/chat.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Chat
+          </a>
+        </nav>
+        <a href="#" @click.prevent="showLogoutModal = true"
+          class="-ml-28 w-[25rem] text-base text-white font-medium py-3 px-5 pl-10 rounded-full transition-all duration-300 ease-in-out flex flex-row items-center gap-4 hover:bg-[#3E8E24] hover:scale-105 hover:translate-x-14 bg-[#56AB2F]">
+          <img src="{{ asset('images/logout.png') }}" class="w-6 h-6 inline-block mr-3 ms-20"> Log Out
         </a>
-        <div class="flex items-center space-x-3">
-          @if(Auth::user()->school && Auth::user()->school->image)
-            <img src="{{ asset('storage/' . Auth::user()->school->image) }}" 
-                class="w-9 h-9 object-cover rounded-full border border-gray-300" 
-                alt="School Logo">
-          @else
-            <div class="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center text-xs text-gray-500 border border-gray-300">
-              Logo
-            </div>
-          @endif
-          <span class="text-gray-700 text-sm font-semibold">{{ Auth::user()->first_name }}</span>
-        </div>
       </div>
+    </aside>
+
+    <main id="main-content" class="flex-1 ml-[23rem] h-screen overflow-y-auto bg-[#F0F4F9]">
+      <div class="w-full h-16 bg-white flex items-center justify-between px-6 mb-6 rounded-md shadow-sm">
+  <div class="flex items-center space-x-3">
+    <a href="{{ route('user.home') }}"
+      class="inline-flex items-center text-sm font-medium text-white bg-[#56AB2F] hover:bg-[#3E8E24] px-4 py-1.5 rounded-full transition-colors duration-200">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9M5 10v11a1 1 0 001 1h3a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3a1 1 0 001-1V10"/>
+      </svg>
+      Home
+    </a>
+    <button class="p-2 text-gray-700 bg-gray-200 rounded-full hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 01-6 0v-1m6 0H9"/>
+      </svg>
+    </button>
+  </div>
+  <div class="flex items-center space-x-3">
+    @if(Auth::user()->school && Auth::user()->school->image)
+      <img src="{{ asset('storage/' . Auth::user()->school->image) }}" 
+        class="w-9 h-9 object-cover rounded-full border border-gray-300" 
+        alt="School Logo">
+    @else
+      <div class="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center text-xs text-gray-500 border border-gray-300">
+        Logo
+      </div>
+    @endif
+    <span class="text-gray-700 text-sm font-semibold">{{ Auth::user()->first_name }}</span>
+  </div>
+</div>
       {{ $slot }}
     </main>
   </div>
-
   <div x-show="showLogoutModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
     <div class="absolute inset-0" @click="showLogoutModal = false"></div>
     <div @click.stop class="p-6 sm:p-10 bg-white rounded-md w-[300px] md:w-[500px] text-center relative">
@@ -193,7 +179,7 @@
       </div>
     </div>
   </div>
-    <div id="loadingOverlay" class="hidden fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
+  <div id="loadingOverlay" class="hidden fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
     <div class="bg-white rounded-xl p-8 shadow-lg flex items-center space-x-5 animate-fadeIn">
       <svg class="animate-spin animate-bounceScale text-[#56AB2F]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -202,13 +188,11 @@
       <span class="text-[#56AB2F] font-semibold">Logging out...</span>
     </div>
   </div>
-
 </body>
-  <script>
+<script>
   document.addEventListener("DOMContentLoaded", () => {
     const logoutForm = document.querySelector('form[action="{{ route('logout') }}"]');
     const overlay = document.getElementById("loadingOverlay");
-
     if (logoutForm) {
       logoutForm.addEventListener("submit", function () {
         overlay.classList.remove("hidden");
@@ -216,52 +200,42 @@
     }
   });
 </script>
-
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const mainContent = document.getElementById('main-content');
-
-  document.addEventListener('click', async (e) => {
-    const link = e.target.closest('.sidebar-link');
-
-    if (!link || link.classList.contains('no-ajax')) return;
-
-    const href = link.getAttribute('href');
-    const target = link.getAttribute('target');
-
-    if (href && href !== '#' && !e.ctrlKey && !e.metaKey && !target) {
-      e.preventDefault();
-
-      try {
-        const response = await fetch(href, {
-          headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
-
-        if (response.ok) {
-          const html = await response.text();
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          const newMain = doc.querySelector('#main-content');
-
-          if (newMain) {
-            mainContent.innerHTML = newMain.innerHTML;
-            history.pushState({}, '', href);
-
-            document.querySelectorAll('.sidebar-link').forEach(l => {
-              l.classList.remove('bg-[#3E8E24]');
-              l.classList.add('bg-[#56AB2F]');
-            });
-
-            link.classList.remove('bg-[#56AB2F]');
-            link.classList.add('bg-[#3E8E24]');
+  document.addEventListener('DOMContentLoaded', () => {
+    const mainContent = document.getElementById('main-content');
+    document.addEventListener('click', async (e) => {
+      const link = e.target.closest('.sidebar-link');
+      if (!link || link.classList.contains('no-ajax')) return;
+      const href = link.getAttribute('href');
+      const target = link.getAttribute('target');
+      if (href && href !== '#' && !e.ctrlKey && !e.metaKey && !target) {
+        e.preventDefault();
+        try {
+          const response = await fetch(href, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+          });
+          if (response.ok) {
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newMain = doc.querySelector('#main-content');
+            if (newMain) {
+              mainContent.innerHTML = newMain.innerHTML;
+              history.pushState({}, '', href);
+              document.querySelectorAll('.sidebar-link').forEach(l => {
+                l.classList.remove('bg-[#3E8E24]');
+                l.classList.add('bg-[#56AB2F]');
+              });
+              link.classList.remove('bg-[#56AB2F]');
+              link.classList.add('bg-[#3E8E24]');
+            }
+          } else {
+            console.error(`Failed to load ${href}:`, response.statusText);
           }
-        } else {
-          console.error(`Failed to load ${href}:`, response.statusText);
+        } catch (err) {
+          console.error('AJAX navigation error:', err);
         }
-      } catch (err) {
-        console.error('AJAX navigation error:', err);
       }
-    }
+    });
   });
-});
 </script>

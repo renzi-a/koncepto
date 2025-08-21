@@ -9,194 +9,257 @@
         box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         font-size: 0.85rem;
     }
-</style>
+    .alert-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        max-width: 300px;
+    }
+    .alert-item-red {
+        background-color: #fef2f2;
+        border-color: #ef4444;
+        color: #b91c1c;
+    }
+    .alert-item-yellow {
+        background-color: #fffbeb;
+        border-color: #f59e0b;
+        color: #92400e;
+    }
+    .highlight-red {
+        background-color: #fef2f2;
+        color: #b91c1c;
+    }
+    .highlight-yellow {
+        background-color: #fffbeb;
+        color: #92400e;
+    }
+    .dismissible-alert {
+        transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+    }
+    .dismissible-alert.closing {
+        transform: translateX(110%);
+        opacity: 0;
+    }
+    </style>
 
-<div class="container mx-auto px-4 py-6 space-y-8">
+    <div class="container mx-auto px-4 py-6 space-y-8">
 
-    <div class="flex justify-between items-center mb-4">
-        <h1 class="text-3xl font-bold text-gray-800">Dashboard</h1>
-        <button
-            id="reloadDashboardBtn"
-            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-sm hover:bg-blue-700 transition">
-            Reload Dashboard
-        </button>
-    </div>
-
-    <form method="GET" action="{{ route('admin.dashboard') }}" class="bg-white rounded-lg shadow p-4 flex flex-wrap gap-4 items-end">
-        <div>
-            <label for="year" class="block text-sm font-medium text-gray-700">Year</label>
-            <select id="year" name="year" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                <option value="">-- Select Year --</option>
-                @foreach (range(date('Y'), date('Y') - 3) as $year)
-                    <option value="{{ $year }}" {{ request('year') == $year ? 'selected' : '' }}>{{ $year }}</option>
-                @endforeach
-            </select>
+        @if ($lowStockProducts->count() > 0)
+        <div class="alert-container space-y-2">
+            @if ($lowStockProducts->count() === 1)
+                @php
+                    $product = $lowStockProducts->first();
+                    $alertClass = $product->quantity <= 5 ? 'alert-item-red' : 'alert-item-yellow';
+                    $alertHover = $product->quantity <= 5 ? 'hover:bg-red-100' : 'hover:bg-yellow-100';
+                    $svgColor = $product->quantity <= 5 ? 'text-red-500' : 'text-yellow-500';
+                    $notice = $product->quantity <= 5 ? 'Please replenish immediately.' : 'Please replenish soon.';
+                @endphp
+                <div class="relative {{ $alertClass }} p-4 rounded-lg shadow-md border-l-4 transition {{ $alertHover }} dismissible-alert cursor-pointer" data-scroll-to="#product-table-container">
+                    <button class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 focus:outline-none close-btn">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                    <div class="flex items-center">
+                        <svg class="h-6 w-6 {{ $svgColor }} mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <span class="font-bold">Low Stock Notice</span>
+                    </div>
+                    <p class="mt-1 text-sm">{{ $product->productName }} has a quantity of {{ $product->quantity }}. {{ $notice }}</p>
+                </div>
+            @else
+                <div class="relative alert-item-yellow p-4 rounded-lg shadow-md border-l-4 dismissible-alert cursor-pointer" data-scroll-to="#product-table-container">
+                    <button class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 focus:outline-none close-btn">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                    <div class="flex items-center">
+                        <svg class="h-6 w-6 text-yellow-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <span class="font-bold">Low Stock Notice</span>
+                    </div>
+                    <p class="mt-1 text-sm">{{ $lowStockProducts->first()->productName }} and {{ $lowStockProducts->count() - 1 }} other items have low stock. Check the table below for details.</p>
+                </div>
+            @endif
         </div>
+        @endif
 
-        <div>
-            <label for="quarter" class="block text-sm font-medium text-gray-700">Quarter</label>
-            <select id="quarter" name="quarter" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                <option value="">-- All Quarters --</option>
-                <option value="1" {{ request('quarter') == '1' ? 'selected' : '' }}>Q1 (Jan-Mar)</option>
-                <option value="2" {{ request('quarter') == '2' ? 'selected' : '' }}>Q2 (Apr-Jun)</option>
-                <option value="3" {{ request('quarter') == '3' ? 'selected' : '' }}>Q3 (Jul-Sep)</option>
-                <option value="4" {{ request('quarter') == '4' ? 'selected' : '' }}>Q4 (Oct-Dec)</option>
-            </select>
-        </div>
-
-        <div>
-            <button type="submit"
-                class="inline-flex items-center px-4 py-2 bg-[#56AB2F] text-white font-semibold rounded-md shadow-sm hover:bg-green-700 transition">
-                Filter
-            </button>
-        </div>
-    </form>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex justify-between items-center text-sm text-gray-500">
-                <span>Total Revenue (This Year)</span>
-                <span class="{{ $revenueChange >= 0 ? 'text-green-600' : 'text-red-600' }} font-semibold text-xs">
-                    {{ $revenueChange >= 0 ? '+' : '' }}{{ number_format($revenueChange ?? 0, 2) }}%
-                </span>
-            </div>
-            <div class="text-3xl font-bold mt-2 text-gray-800">
-                ₱{{ number_format($totalRevenue ?? 0, 2) }}
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex justify-between items-center text-sm text-gray-500">
-                <span>Monthly Revenue Change</span>
-                <span class="{{ $monthlyRevenueChange >= 0 ? 'text-green-600' : 'text-red-600' }} font-semibold text-xs">
-                    {{ $monthlyRevenueChange >= 0 ? '+' : '' }}{{ number_format($monthlyRevenueChange ?? 0, 2) }}%
-                </span>
-            </div>
-            <div class="text-3xl font-bold mt-2 text-gray-800">
-                @if(isset($monthlyRevenue))
-                    ₱{{ number_format($monthlyRevenue[Carbon\Carbon::now()->month - 1] ?? 0, 2) }}
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-3xl font-bold text-gray-800">
+                @if ($selectedYear)
+                    {{ $selectedYear }} Sales Dashboard
                 @else
-                    ₱0.00
+                    All Years Sales Dashboard
                 @endif
+            </h1>
+        </div>
+
+        <form method="GET" action="{{ route('admin.dashboard') }}" class="bg-white rounded-lg shadow p-4 flex flex-wrap gap-4 items-end">
+            <div>
+                <label for="year" class="block text-sm font-medium text-gray-700">Year</label>
+                <select id="year" name="year" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                    <option value="" {{ request('year') == '' ? 'selected' : '' }}>-- All Years --</option>
+                    @foreach (range(date('Y'), 2020) as $year)
+                        <option value="{{ $year }}" {{ request('year', '2025') == $year ? 'selected' : '' }}>{{ $year }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <label for="quarter" class="block text-sm font-medium text-gray-700">Quarter</label>
+                <select id="quarter" name="quarter" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                    <option value="">-- All Quarters --</option>
+                    <option value="1" {{ request('quarter') == '1' ? 'selected' : '' }}>Q1 (Jan-Mar)</option>
+                    <option value="2" {{ request('quarter') == '2' ? 'selected' : '' }}>Q2 (Apr-Jun)</option>
+                    <option value="3" {{ request('quarter') == '3' ? 'selected' : '' }}>Q3 (Jul-Sep)</option>
+                    <option value="4" {{ request('quarter') == '4' ? 'selected' : '' }}>Q4 (Oct-Dec)</option>
+                </select>
+            </div>
+
+            <div>
+                <button type="submit"
+                    class="inline-flex items-center px-4 py-2 bg-[#56AB2F] text-white font-semibold rounded-md shadow-sm hover:bg-green-700 transition">
+                    Filter
+                </button>
+            </div>
+        </form>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex justify-between items-center text-sm text-gray-500">
+                    <span>Total Sales ({{ $selectedYear ? $selectedYear : 'All Years' }})</span>
+                    <span class="{{ $salesChange >= 0 ? 'text-green-600' : 'text-red-600' }} font-semibold text-xs">
+                        {{ $salesChange >= 0 ? '+' : '' }}{{ number_format($salesChange ?? 0, 2) }}%
+                    </span>
+                </div>
+                <div class="text-3xl font-bold mt-2 text-gray-800">
+                    ₱{{ number_format($totalSales ?? 0, 2) }}
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex justify-between items-center text-sm text-gray-500">
+                    <span>Monthly Sales Change</span>
+                    <span class="{{ $monthlySalesChange >= 0 ? 'text-green-600' : 'text-red-600' }} font-semibold text-xs">
+                        {{ $monthlySalesChange >= 0 ? '+' : '' }}{{ number_format($monthlySalesChange ?? 0, 2) }}%
+                    </span>
+                </div>
+                <div class="text-3xl font-bold mt-2 text-gray-800">
+                    @if(isset($salesTrendData))
+                        @if($selectedYear)
+                            ₱{{ number_format($salesTrendData[Carbon\Carbon::now()->month - 1] ?? 0, 2) }}
+                        @else
+                            ₱N/A
+                        @endif
+                    @else
+                        ₱0.00
+                    @endif
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex justify-between items-center text-sm text-gray-500">
+                    <span>Pending Orders ({{ $selectedYear ? $selectedYear : 'All Years' }})</span>
+                    <span class="{{ $pendingChange >= 0 ? 'text-red-600' : 'text-green-600' }} font-semibold text-xs">
+                        {{ $pendingChange >= 0 ? '+' : '' }}{{ number_format($pendingChange ?? 0, 2) }}%
+                    </span>
+                </div>
+                <div class="text-3xl font-bold mt-2 text-yellow-500">
+                    {{ ($pendingOrders ?? 0) + ($customPending ?? 0) }}
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex justify-between items-center text-sm text-gray-500">
+                    <span>Completed Orders ({{ $selectedYear ? $selectedYear : 'All Years' }})</span>
+                    <span class="{{ $completedChange >= 0 ? 'text-green-600' : 'text-red-600' }} font-semibold text-xs">
+                        {{ $completedChange >= 0 ? '+' : '' }}{{ number_format($completedChange ?? 0, 2) }}%
+                    </span>
+                </div>
+                <div class="text-3xl font-bold mt-2 text-green-600">
+                    {{ ($completedOrders ?? 0) + ($customCompleted ?? 0) }}
+                </div>
             </div>
         </div>
         
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex justify-between items-center text-sm text-gray-500">
-                <span>Pending Orders (This Year)</span>
-                <span class="{{ $pendingChange >= 0 ? 'text-red-600' : 'text-green-600' }} font-semibold text-xs">
-                    {{ $pendingChange >= 0 ? '+' : '' }}{{ number_format($pendingChange ?? 0, 2) }}%
-                </span>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="bg-white rounded-lg shadow p-6 lg:col-span-2">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">Sales Trend ({{ $selectedYear ? $selectedYear : 'All Years' }})</h2>
+                <canvas id="salesTrendChart" class="w-full max-h-72"></canvas>
             </div>
-            <div class="text-3xl font-bold mt-2 text-yellow-500">
-                {{ ($pendingOrders ?? 0) + ($customPending ?? 0) }}
-            </div>
-        </div>
 
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex justify-between items-center text-sm text-gray-500">
-                <span>Completed Orders (This Year)</span>
-                <span class="{{ $completedChange >= 0 ? 'text-green-600' : 'text-red-600' }} font-semibold text-xs">
-                    {{ $completedChange >= 0 ? '+' : '' }}{{ number_format($completedChange ?? 0, 2) }}%
-                </span>
-            </div>
-            <div class="text-3xl font-bold mt-2 text-green-600">
-                {{ ($completedOrders ?? 0) + ($customCompleted ?? 0) }}
+            <div class="bg-white rounded-lg shadow p-6 lg:col-span-1">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">Orders Trend ({{ $selectedYear ? $selectedYear : 'All Years' }})</h2>
+                <canvas id="ordersTrendChart" class="w-full max-h-72"></canvas>
             </div>
         </div>
-    </div>
-    
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="bg-white rounded-lg shadow p-6 lg:col-span-2">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">Sales Trend</h2>
-            <canvas id="salesTrendChart" class="w-full max-h-72"></canvas>
-        </div>
-
-        <div class="bg-white rounded-lg shadow p-6 lg:col-span-1">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">Orders Trend</h2>
-            <canvas id="ordersTrendChart" class="w-full max-h-72"></canvas>
-        </div>
-    </div>
-    
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">Top 10 Products by Volume</h2>
-            <canvas id="topProductsChart" class="w-full max-h-72 mt-6"></canvas>
-        </div>
-        <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">Top Products List</h2>
-            <div class="h-[300px] overflow-y-auto">
-                <table class="w-full text-sm text-left">
-                    <thead>
-                        <tr class="text-gray-700 border-b">
-                            <th class="py-2 px-4">#</th>
-                            <th class="py-2 px-4">Product</th>
-                            <th class="py-2 px-4 text-right">Units Sold</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($topProducts as $index => $product)
-                            <tr class="border-b hover:bg-gray-50">
-                                <td class="py-2 px-4">{{ $index + 1 }}</td>
-                                <td class="py-2 px-4">{{ $product->product_name }}</td>
-                                <td class="py-2 px-4 text-right">{{ number_format($product->total) }}</td>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">Top 10 Products by Volume ({{ $selectedYear ? $selectedYear : 'All Years' }})</h2>
+                <canvas id="topProductsChart" class="w-full max-h-72 mt-6"></canvas>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">Top Products List ({{ $selectedYear ? $selectedYear : 'All Years' }})</h2>
+                <div class="h-[300px] overflow-y-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead>
+                            <tr class="text-gray-700 border-b">
+                                <th class="py-2 px-4">#</th>
+                                <th class="py-2 px-4">Product</th>
+                                <th class="py-2 px-4 text-right">Units Sold</th>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="3" class="text-center text-gray-500 py-4">No top products available</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @forelse($topProducts as $index => $product)
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="py-2 px-4">{{ $index + 1 }}</td>
+                                    <td class="py-2 px-4">{{ $product->product_name }}</td>
+                                    <td class="py-2 px-4 text-right">{{ number_format($product->total) }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="3" class="text-center text-gray-500 py-4">No top products available</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Sales by School ({{ $selectedYear ? $selectedYear : 'All Years' }})</h2>
+            <div id="nasugbuMap" class="w-full h-[500px] rounded-md"></div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6 overflow-x-auto">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Products</h2>
+            <div id="product-table-container">
+                @include('admin.partials.product-table-content', ['products' => $products])
             </div>
         </div>
     </div>
-
-    <div class="bg-white rounded-lg shadow p-6">
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">Sales by School</h2>
-        <div id="nasugbuMap" class="w-full h-[500px] rounded-md"></div>
-    </div>
-
-    <div class="bg-white rounded-lg shadow p-6 overflow-x-auto">
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">Products</h2>
-        <table class="min-w-full text-sm text-left">
-            <thead>
-                <tr class="text-gray-700 border-b">
-                    <th class="py-2 px-4">Product</th>
-                    <th class="py-2 px-4">Category</th>
-                    <th class="py-2 px-4">Stock</th>
-                    <th class="py-2 px-4">Price</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($products as $product)
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="py-2 px-4">{{ $product->productName }}</td>
-                        <td class="py-2 px-4">{{ $product->category->categoryName ?? 'N/A' }}</td>
-                        <td class="py-2 px-4">{{ $product->quantity }}</td>
-                        <td class="py-2 px-4">₱{{ number_format($product->price, 2) }}</td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="4" class="text-center text-gray-500 py-4">No products available</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-</div>
 </x-layout>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize Leaflet Map
     const mapEl = document.getElementById('nasugbuMap');
     if (mapEl) {
-        const map = L.map(mapEl).setView([14.0940, 120.6890], 13);
+        const map = L.map(mapEl, {
+            zoomControl: false, 
+            scrollWheelZoom: false,
+            doubleClickZoom: false,
+            dragging: false,
+            boxZoom: false,
+            touchZoom: false,
+            keyboard: false
+        }).setView([14.0940, 120.6890], 12);  
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
@@ -208,9 +271,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const popupContent = `
                 <div class="text-sm">
-                    <strong>${school.name}</strong><br>
+                    <strong>${school.school_name}</strong><br>
                     🧾 Orders: ${school.total_orders}<br>
-                    💰 Revenue: ₱${parseFloat(school.total_revenue).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    💰 Sales: ₱${parseFloat(school.total_sales).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </div>
             `;
 
@@ -233,7 +296,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Chart Initialization (SALES, ORDERS & TOP PRODUCTS)
     const salesLabels = @json($salesTrendLabels);
     const salesData = @json($salesTrendData);
     const ordersData = @json($monthlyOrders);
@@ -265,7 +327,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Orders Trend Chart
     if (ordersCtx && salesLabels?.length && ordersData?.length) {
         new Chart(ordersCtx, {
             type: 'bar',
@@ -303,7 +364,56 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const reloadBtn = document.getElementById('reloadDashboardBtn');
-    reloadBtn?.addEventListener('click', () => window.location.reload());
+    const productTableContainer = document.getElementById('product-table-container');
+
+    productTableContainer.addEventListener('click', function(e) {
+        if (e.target.closest('.pagination a')) {
+            e.preventDefault();
+            const url = e.target.closest('.pagination a').href;
+            const tableSection = document.getElementById('product-table-container');
+
+            if (url) {
+                fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    tableSection.innerHTML = html;
+                    tableSection.scrollIntoView({ behavior: 'smooth' });
+                })
+                .catch(error => console.error('Error fetching pagination:', error));
+            }
+        }
+    });
+
+    document.querySelectorAll('.close-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const alert = this.closest('.dismissible-alert');
+            alert.classList.add('closing');
+
+            alert.addEventListener('transitionend', () => {
+                alert.remove();
+            }, { once: true });
+        });
+    });
+    
+    document.querySelectorAll('[data-scroll-to]').forEach(element => {
+        element.addEventListener('click', function(e) {
+            if (e.target.closest('.close-btn')) {
+                return;
+            }
+            
+            const targetId = this.getAttribute('data-scroll-to');
+            const targetElement = document.querySelector(targetId);
+
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
 });
 </script>

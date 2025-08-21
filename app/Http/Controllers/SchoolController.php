@@ -6,6 +6,7 @@ use App\Models\School;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class SchoolController extends Controller
 {
@@ -16,11 +17,6 @@ class SchoolController extends Controller
             $customOrder = $school->customOrder()->count();
 
             $school->orders_count = $regularOrders + $customOrder;
-
-            $school->users_count = $school->users()->count();
-            $school->admin_count = $school->users()->where('role', 'school_admin')->count();
-            $school->teacher_count = $school->users()->where('role', 'teacher')->count();
-            $school->student_count = $school->users()->where('role', 'student')->count();
 
             return $school;
         });
@@ -52,7 +48,6 @@ class SchoolController extends Controller
             'admin_password' => 'required|string|min:8|confirmed',
         ]);
 
-        // Create admin user
         $admin = User::create([
             'first_name' => $validated['admin_first_name'],
             'last_name' => $validated['admin_last_name'],
@@ -67,7 +62,6 @@ class SchoolController extends Controller
             $logoPath = $request->file('logo')->store('logos', 'public');
         }
 
-        // Create school and assign admin user
         $school = School::create([
             'school_name' => $validated['school_name'],
             'address' => $validated['address'],
@@ -76,7 +70,7 @@ class SchoolController extends Controller
             'user_id' => $admin->id,
             'lat' => $validated['lat'],
             'lng' => $validated['lng'],
-            'principal' => $validated['principal'], // ✅ store principal name
+            'principal' => $validated['principal'],
         ]);
 
         $admin->school_id = $school->id;
@@ -85,14 +79,13 @@ class SchoolController extends Controller
         return redirect()->route('admin.schools.show', $school)->with('success', 'School and Admin created successfully.');
     }
 
-    public function show(School $school)
-    {
-        $school->load(['user', 'orders', 'users']);
-        $users = $school->users;
-        $activeUser = $school->user;
+public function show(School $school)
+{
+    $school->load('user');
+    $admin = $school->user;
 
-        return view('admin.schools.show', compact('school', 'users', 'activeUser'));
-    }
+    return view('admin.schools.show', compact('school', 'admin'));
+}
 
     public function edit(School $school)
     {
@@ -101,52 +94,50 @@ class SchoolController extends Controller
         return view('admin.schools.edit', compact('school', 'admin'));
     }
 
-    public function update(Request $request, School $school)
-    {
-        $validated = $request->validate([
-            'school_name' => 'required|string|max:255',
-            'address' => 'required|string|max:255',
-            'school_email' => 'required|email|unique:schools,school_email,' . $school->id,
-            'logo' => 'nullable|image|max:2048',
-            'lat' => 'required|numeric',
-            'lng' => 'required|numeric',
-            'principal' => 'required|string|max:255',
+public function update(Request $request, School $school)
+{
+    $validated = $request->validate([
+        'school_name' => 'required|string|max:255',
+        'address' => 'required|string|max:255',
+        'school_email' => 'required|email|unique:schools,school_email,' . $school->id,
+        'logo' => 'nullable|image|max:2048',
+        'principal' => 'required|string|max:255',
+        'admin_first_name' => 'required|string|max:255',
+        'admin_last_name' => 'required|string|max:255',
+        'admin_email' => 'required|email|unique:users,email,' . $school->user_id,
+        'admin_contact' => 'required|string|max:20',
+        'admin_role' => 'required|in:school_admin',
+        'admin_password' => 'nullable|string|min:8|confirmed',
+    ]);
 
-            'admin_first_name' => 'required|string|max:255',
-            'admin_last_name' => 'required|string|max:255',
-            'admin_email' => 'required|email|unique:users,email,' . $school->user_id,
-            'admin_contact' => 'required|string|max:20',
-            'admin_role' => 'required|in:school_admin',
-            'admin_password' => 'nullable|string|min:8|confirmed',
-        ]);
-
-        $admin = $school->users()->where('role', 'school_admin')->first();
-        $admin->first_name = $validated['admin_first_name'];
-        $admin->last_name = $validated['admin_last_name'];
-        $admin->email = $validated['admin_email'];
-        $admin->cp_no = $validated['admin_contact'];
-        $admin->role = $validated['admin_role'];
-        if (!empty($validated['admin_password'])) {
-            $admin->password = Hash::make($validated['admin_password']);
-        }
-        $admin->save();
-
-        if ($request->hasFile('logo')) {
-            $logoPath = $request->file('logo')->store('logos', 'public');
-            $school->image = $logoPath;
-        }
-
-        $school->update([
-            'school_name' => $validated['school_name'],
-            'address' => $validated['address'],
-            'school_email' => $validated['school_email'],
-            'lat' => $validated['lat'],
-            'lng' => $validated['lng'],
-            'principal' => $validated['principal'],
-        ]);
-
-        return redirect()->route('admin.schools.index')->with('success', 'School and Admin updated successfully.');
+    $admin = $school->users()->where('role', 'school_admin')->first();
+    $admin->first_name = $validated['admin_first_name'];
+    $admin->last_name = $validated['admin_last_name'];
+    $admin->email = $validated['admin_email'];
+    $admin->cp_no = $validated['admin_contact'];
+    $admin->role = $validated['admin_role'];
+    if (!empty($validated['admin_password'])) {
+        $admin->password = Hash::make($validated['admin_password']);
     }
+    $admin->save();
+
+    if ($request->hasFile('logo')) {
+        if ($school->image) {
+            Storage::disk('public')->delete($school->image);
+        }
+        $logoPath = $request->file('logo')->store('logos', 'public');
+        $school->image = $logoPath;
+    }
+
+    $school->update([
+        'school_name' => $validated['school_name'],
+        'address' => $validated['address'],
+        'school_email' => $validated['school_email'],
+        'principal' => $validated['principal'],
+    ]);
+
+    return response()->json(['message' => 'School and Admin updated successfully.']);
+}
 
     public function destroy(School $school)
     {

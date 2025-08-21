@@ -1,8 +1,6 @@
 <footer class="bg-zinc-50 text-center text-gray-700 dark:bg-neutral-800 dark:text-white lg:text-left">
-    <!-- Main Content -->
     <div class="mx-6 py-10 text-center md:text-left">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <!-- About Koncepto -->
             <div>
                 <h6 class="mb-4 font-semibold uppercase">Koncepto</h6>
                 <p>
@@ -10,7 +8,6 @@
                 </p>
             </div>
 
-            <!-- Product Categories -->
             <div>
                 <h6 class="mb-4 font-semibold uppercase">Categories</h6>
                 <p class="mb-2"><a href="#" class="hover:underline">Paper Products</a></p>
@@ -19,16 +16,13 @@
                 <p class="mb-2"><a href="#" class="hover:underline">Filing & Organizing</a></p>
             </div>
 
-            <!-- Quick Links -->
             <div>
                 <h6 class="mb-4 font-semibold uppercase">Quick Links</h6>
                 <p class="mb-2"><a href="{{ route('home') }}" class="hover:underline">Home</a></p>
                 <p class="mb-2"><a href="/login" class="hover:underline">Login</a></p>
-                <p class="mb-2"><a href="/register" class="hover:underline">Register</a></p>
                 <p class="mb-2"><a href="/custom-order" class="hover:underline">Custom Order</a></p>
             </div>
 
-            <!-- Contact Info -->
             <div>
                 <h6 class="mb-4 font-semibold uppercase">Contact</h6>
                 <p class="mb-3 flex items-center justify-center md:justify-start gap-2">
@@ -54,7 +48,6 @@
         </div>
     </div>
 
-    <!-- Copyright -->
     <div class="bg-black/5 p-6 text-center text-sm">
         © 2025 <span class="font-semibold">Koncepto</span>. All rights reserved.
     </div>

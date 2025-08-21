@@ -39,9 +39,13 @@ Route::middleware(['auth', IsAdmin::class])->group(function () {
 
 
     Route::get('/admin/orders', [OrderController::class, 'adminOrders'])->name('admin.orders');
-    Route::get('/admin/orders/{id}', [OrderController::class, 'show'])->name('admin.orders.show');
-    Route::get('/admin/orders/ajax', [OrderController::class, 'fetchOrders'])->name('admin.orders.ajax');
     Route::post('/admin/orders/update-status', [OrderController::class, 'updateOrderStatus'])->name('admin.orders.updateStatus');
+    Route::get('/admin/orders/{id}', [OrderController::class, 'show'])->name('admin.orders.show');
+    Route::get('/admin/orders/{id}/gather', [OrderController::class, 'gatherNormal'])->name('admin.orders.gather');
+    Route::post('/admin/orders/items/{id}/toggle-gathered', [OrderController::class, 'toggleNormalGathered'])->name('admin.orders.toggle-gathered');
+    Route::post('/admin/orders/{id}/gather', [OrderController::class, 'saveNormalGatheringInfo'])->name('admin.orders.gather.store');
+
+
     Route::get('/admin/custom-orders/{customOrder}', [OrderController::class, 'adminCustomShow'])
         ->name('admin.custom-orders.show');
     Route::get('/admin/custom-orders/{id}/quotation', [OrderController::class, 'showQuotation'])
@@ -50,10 +54,11 @@ Route::middleware(['auth', IsAdmin::class])->group(function () {
         ->name('admin.custom-orders.quotation.save');
     Route::get('/admin/custom-orders/{id}/gather', [OrderController::class, 'gather'])
         ->name('admin.custom-orders.gather');
+    Route::post('/admin/custom-orders/{id}/gather', [OrderController::class, 'saveGatheringInfo'])
+        ->name('admin.custom-orders.gather.store');
     Route::get('/admin/custom-orders/{id}/gather-pdf', [OrderController::class, 'gatherPdf'])
         ->name('admin.custom-orders.gather-pdf');
     Route::post('/admin/custom-orders/items/{id}/toggle-gathered', [OrderController::class, 'toggleGathered'])->name('admin.custom-orders.toggle-gathered');
-
 
     Route::get('/admin/payment', [PaymentController::class, 'index'])->name('admin.payment');
 
@@ -75,6 +80,8 @@ Route::middleware(['auth', IsAdmin::class])->group(function () {
         Route::get('/{product}/edit', [ProductController::class, 'edit'])->name('edit');
         Route::put('/{product}', [ProductController::class, 'update'])->name('update');
         Route::delete('/{product}', [ProductController::class, 'destroy'])->name('destroy');
+        Route::get('/products/search', [ProductController::class, 'search'])->name('search');
+        Route::post('/{product}/add-quantity', [ProductController::class, 'addQuantity'])->name('add-quantity');
     });
 
     // School Management
@@ -106,7 +113,6 @@ Route::middleware(['auth', IsUser::class])->group(function () {
     Route::get('/user/dashboard', [UserController::class, 'dashboard'])->name('user.dashboard');
     Route::get('/user/profile', [UserController::class, 'profile'])->name('user.profile');
     Route::put('/user/profile', [UserController::class, 'updateProfile'])->name('user.profile.update');
-    Route::get('/user/users', [UserController::class, 'users'])->name('user.users');
 
     // Product
     Route::get('/user/home', [UserController::class, 'index'])->name('user.home');
@@ -123,6 +129,7 @@ Route::middleware(['auth', IsUser::class])->group(function () {
     Route::delete('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
     Route::get('/checkout', [CartController::class, 'form'])->name('checkout.show');
     Route::post('/checkout', [CartController::class, 'process'])->name('checkout.process');
+    Route::get('/checkout-now', [CartController::class, 'checkoutNow'])->name('checkout.now');
 
     // Chat
     Route::get('/user/chat-popup', [ChatController::class, 'popup'])->name('user.chat.popup');
@@ -165,5 +172,3 @@ Route::middleware(['auth', IsUser::class])->group(function () {
         ->name('user.order.gather-pdf');
 
 });
-
-

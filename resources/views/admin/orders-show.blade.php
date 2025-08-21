@@ -1,47 +1,81 @@
 <x-layout>
     <div class="container mx-auto px-4 py-6 space-y-6">
-        <div class="flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-800">Order #{{ $order->id }}</h1>
-            <span class="text-sm text-gray-500">{{ $order->created_at->format('F j, Y h:i A') }}</span>
-            <a href="{{ route('admin.orders') }}" class="text-blue-600 hover:underline">← Back to Orders</a>
+
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center space-x-4">
+                <h1 class="text-3xl font-extrabold text-gray-900">Order #{{ $order->id }}</h1>
+                <form action="{{ route('admin.orders.updateStatus') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="order_id" value="{{ $order->id }}">
+                    <input type="hidden" name="type" value="normal">
+                    <select name="status" onchange="this.form.submit()" class="rounded-md border-gray-300 text-sm font-medium">
+                        @foreach(['pending', 'processing', 'completed', 'cancelled', 'to be delivered', 'delivered'] as $status)
+                            <option value="{{ $status }}" {{ $order->status === $status ? 'selected' : '' }}>
+                                {{ ucfirst($status) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </form>
+            </div>
+            <div class="text-right">
+                <span class="block text-sm text-gray-600">Ordered: {{ $order->created_at->format('M d, Y') }}</span>
+                <span class="block text-xs text-gray-400">Time: {{ $order->created_at->format('h:i A') }}</span>
+            </div>
         </div>
 
-        <div class="bg-white p-6 rounded shadow space-y-4">
-            <p><strong>Status:</strong> {{ ucfirst($order->status) }}</p>
-            <p><strong>Customer:</strong> {{ $order->user->first_name ?? 'N/A' }} {{ $order->user->last_name ?? '' }}</p>
+        <div class="bg-white p-8 rounded-lg shadow-md space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h2 class="font-semibold text-lg text-gray-700 mb-2">Customer & Contact</h2>
+                    <p class="text-gray-600">
+                        <strong>School Name: </strong> {{ $order->user->school->school_name ?? 'N/A' }}
+                    </p>
+                    <p class="text-gray-600">
+                        <strong>School Admin: </strong> {{ $order->user->school->school_admin->first_name ?? 'N/A' }} {{ $order->user->school->school_admin->last_name ?? '' }}
+                    </p>
+                    <p class="text-gray-600">
+                        <strong>Phone No: </strong> {{ $order->user->cp_no ?? 'N/A' }}
+                    </p>
+                </div>
+                <div>
+                    <h2 class="font-semibold text-lg text-gray-700 mb-2">Shipping Information</h2>
+                    <p class="text-gray-600">
+                        <strong>Address: </strong> {{ $order->user->school->address ?? 'N/A' }}
+                    </p>
+                </div>
+            </div>
 
             <hr>
 
-            <h2 class="font-semibold text-lg mb-2">Order Details</h2>
-
-            <div class="overflow-x-auto bg-white rounded-lg shadow">
-                <table class="min-w-full table-auto text-sm text-left text-gray-600">
-                    <thead class="bg-gray-100 text-gray-800 font-semibold">
+            <div class="bg-gray-50 p-4 rounded-lg shadow-inner overflow-x-auto">
+                <h2 class="font-semibold text-lg text-gray-700 mb-4">Order Items</h2>
+                <table class="w-full table-auto text-sm text-left text-gray-600">
+                    <thead class="bg-gray-200 text-gray-800">
                         <tr>
-                            <th class="px-4 py-3">Name</th>
-                            <th class="px-4 py-3">Brand</th>
-                            <th class="px-4 py-3">Unit</th>
+                            <th class="px-4 py-3">Product</th>
                             <th class="px-4 py-3">Quantity</th>
-                            <th class="px-4 py-3">Description</th>
-                            <th class="px-4 py-3">Price</th>
+                            <th class="px-4 py-3">Unit Price</th>
+                            <th class="px-4 py-3 text-right">Total</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($order->orderDetails as $detail)
+                        @php $grandTotal = 0; @endphp
+                        @foreach ($order->orderDetails as $detail)
+                            @php $grandTotal += $detail->quantity * $detail->price; @endphp
                             <tr class="border-t">
-                                <td class="px-4 py-2">{{ $detail->product->productName ?? 'Deleted Product' }}</td>
-                                <td class="px-4 py-2">{{ $detail->product->brandName ?? 'N/A' }}</td>
-                                <td class="px-4 py-2">{{ $detail->product->unit ?? 'N/A' }}</td>
+                                <td class="px-4 py-2 font-medium">{{ $detail->product->productName ?? 'Deleted Product' }}</td>
                                 <td class="px-4 py-2">{{ $detail->quantity }}</td>
-                                <td class="px-4 py-2">{{ $detail->product->description ?? 'No description' }}</td>
-                                <td class="px-4 py-2 font-semibold">₱{{ number_format($detail->price, 2) }}</td>
+                                <td class="px-4 py-2">₱{{ number_format($detail->price, 2) }}</td>
+                                <td class="px-4 py-2 text-right">₱{{ number_format($detail->quantity * $detail->price, 2) }}</td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="px-4 py-4 text-center text-gray-500">No items found.</td>
-                            </tr>
-                        @endforelse
+                        @endforeach
                     </tbody>
+                    <tfoot class="bg-gray-100 font-semibold border-t">
+                        <tr>
+                            <td colspan="3" class="px-4 py-2 text-right">Grand Total:</td>
+                            <td class="px-4 py-2 text-right text-green-700">₱{{ number_format($grandTotal, 2) }}</td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         </div>

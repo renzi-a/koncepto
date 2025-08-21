@@ -1,19 +1,21 @@
 <x-layout>
     @push('styles')
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-geosearch@3.1.0/dist/geosearch.css" />
     <style>
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
+        .loader {
+            border-top-color: #3b82f6; /* A shade of blue-600 */
+            -webkit-animation: spin 1s linear infinite;
+            animation: spin 1s linear infinite;
         }
-        .animate-fadeIn { animation: fadeIn 0.3s ease-out forwards; }
 
-        @keyframes bounceScale {
-            0%, 100% { transform: scale(1) translateY(0); opacity: 1; }
-            50% { transform: scale(1.15) translateY(-10%); opacity: 0.8; }
+        @-webkit-keyframes spin {
+            0% { -webkit-transform: rotate(0deg); }
+            100% { -webkit-transform: rotate(360deg); }
         }
-        .animate-bounceScale { animation: bounceScale 1.2s ease-in-out infinite; }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
     @endpush
 
@@ -57,17 +59,14 @@
                         <input type="text" name="address" id="address" value="{{ old('address', $school->address) }}" required class="w-full border border-gray-300 px-3 py-2 rounded">
                     </div>
 
-                    <input type="hidden" name="lat" id="latitude" value="{{ old('lat', $school->latitude) }}">
-                    <input type="hidden" name="lng" id="longitude" value="{{ old('lng', $school->longitude) }}">
-
                     <div>
                         <label for="school_email" class="block font-semibold mb-1">School Email</label>
                         <input type="email" name="school_email" id="school_email" value="{{ old('school_email', $school->school_email) }}" required class="w-full border border-gray-300 px-3 py-2 rounded">
                     </div>
-                <div>
-                    <label for="principal" class="block font-semibold mb-1">Principal</label>
-                    <input type="text" name="principal" id="principal" value="{{ old('principal', $school->principal) }}" class="w-full border border-gray-300 px-3 py-2 rounded">
-                </div>
+                    <div>
+                        <label for="principal" class="block font-semibold mb-1">Principal</label>
+                        <input type="text" name="principal" id="principal" value="{{ old('principal', $school->principal) }}" class="w-full border border-gray-300 px-3 py-2 rounded">
+                    </div>
                     
                     <div>
                         <label for="logo" class="block font-semibold mb-1">School Logo</label>
@@ -75,11 +74,6 @@
                         @if($school->image)
                             <img src="{{ asset('storage/' . $school->image) }}" alt="Logo" class="w-16 h-16 mt-2">
                         @endif
-                    </div>
-
-                    <div class="md:col-span-2">
-                        <label class="block font-semibold mb-1">Select Location on Map</label>
-                        <div id="map" class="w-full h-64 border rounded"></div>
                     </div>
                 </div>
             </div>
@@ -131,97 +125,135 @@
         </form>
     </div>
 
-    <div id="loadingOverlay" class="hidden fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
-        <div class="bg-white rounded-xl p-8 shadow-lg flex items-center space-x-5 animate-fadeIn">
-            <div class="animate-bounceScale">
-                <svg class="animate-spin text-[#2563EB] h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                </svg>
+    <div id="confirmModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full transform transition-all duration-300 scale-95 opacity-0" id="confirmModalContent">
+            <h3 class="text-2xl font-bold mb-4 text-gray-800">Update School & Admin</h3>
+            <p id="confirmMessage" class="mb-6 text-gray-700 leading-relaxed">Are you sure you want to update this school and admin?</p>
+            <div class="flex justify-end space-x-3">
+                <button id="noButton" class="px-6 py-2 bg-gray-300 text-gray-800 font-semibold rounded-lg hover:bg-gray-400 transition-colors">No</button>
+                <button id="yesButton" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">Yes</button>
             </div>
-            <span class="text-blue-600 font-semibold text-lg">Saving...</span>
+        </div>
+    </div>
+
+    <div id="loadingModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
+            <div class="loader ease-linear rounded-full border-4 border-t-4 border-blue-200 h-12 w-12 mb-4 mx-auto"></div>
+            <h3 class="text-xl font-semibold text-gray-800">Updating School & Admin...</h3>
+            <p class="text-gray-500">Please wait while we save your changes.</p>
+        </div>
+    </div>
+
+    <div id="successModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full transform transition-all duration-300 scale-95 opacity-0" id="successModalContent">
+            <h3 class="text-2xl font-bold mb-4 text-gray-800">Success!</h3>
+            <p id="successMessage" class="mb-6 text-gray-700 leading-relaxed">School and admin updated successfully!</p>
+            <div class="flex justify-end">
+                <button id="successModalClose" class="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors">OK</button>
+            </div>
         </div>
     </div>
 
     @push('scripts')
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-geosearch@3.1.0/dist/bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const latInput = document.getElementById("latitude");
-            const lngInput = document.getElementById("longitude");
-            const nameInput = document.getElementById("school_name");
-            const addressInput = document.getElementById("address");
+        document.addEventListener('DOMContentLoaded', function() {
+            const schoolForm = document.getElementById('schoolForm');
+            const confirmModal = document.getElementById('confirmModal');
+            const confirmModalContent = document.getElementById('confirmModalContent');
+            const loadingModal = document.getElementById('loadingModal');
+            const successModal = document.getElementById('successModal');
+            const successModalContent = document.getElementById('successModalContent');
+            const yesButton = document.getElementById('yesButton');
+            const noButton = document.getElementById('noButton');
+            const successModalClose = document.getElementById('successModalClose');
 
-            let lat = parseFloat(latInput.value);
-            let lng = parseFloat(lngInput.value);
-            if (isNaN(lat) || isNaN(lng)) {
-                lat = 14.0681;
-                lng = 120.7178;
-                latInput.value = lat.toFixed(6);
-                lngInput.value = lng.toFixed(6);
+            function showModal(modalElement, contentElement) {
+                modalElement.classList.remove('hidden');
+                if (contentElement) {
+                    setTimeout(() => {
+                        contentElement.classList.remove('scale-95', 'opacity-0');
+                        contentElement.classList.add('scale-100', 'opacity-100');
+                    }, 10);
+                }
             }
 
-            const map = L.map("map").setView([lat, lng], 16);
-            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                attribution: "© OpenStreetMap contributors"
-            }).addTo(map);
-
-            const marker = L.marker([lat, lng], { draggable: true }).addTo(map);
-
-            function updateFields(newLat, newLng) {
-                latInput.value = newLat.toFixed(6);
-                lngInput.value = newLng.toFixed(6);
+            function hideModal(modalElement, contentElement, callback = () => {}) {
+                if (contentElement) {
+                    contentElement.classList.remove('scale-100', 'opacity-100');
+                    contentElement.classList.add('scale-95', 'opacity-0');
+                    setTimeout(() => {
+                        modalElement.classList.add('hidden');
+                        callback();
+                    }, 300);
+                } else {
+                    modalElement.classList.add('hidden');
+                    callback();
+                }
             }
 
-            marker.on("dragend", (e) => {
-                const { lat, lng } = e.target.getLatLng();
-                updateFields(lat, lng);
+            schoolForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                showModal(confirmModal, confirmModalContent);
             });
 
-            map.on("click", (e) => {
-                marker.setLatLng(e.latlng);
-                updateFields(e.latlng.lat, e.latlng.lng);
+            yesButton.addEventListener('click', function() {
+                hideModal(confirmModal, confirmModalContent, () => {
+                    showModal(loadingModal);
+                    
+                    const formData = new FormData(schoolForm);
+                    formData.append('_method', 'PUT');
+
+                    const actionUrl = schoolForm.action;
+                    const csrfToken = schoolForm.querySelector('input[name="_token"]').value;
+
+                    fetch(actionUrl, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': csrfToken
+                        }
+                    })
+                    .then(response => {
+                        hideModal(loadingModal);
+                        if (!response.ok) {
+                             // Handle validation errors or other server-side errors
+                            return response.json().then(err => { throw err; });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.message) {
+                            document.getElementById('successMessage').textContent = data.message;
+                            showModal(successModal, successModalContent);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        hideModal(loadingModal, null, () => {
+                            // Display a generic error message
+                            alert('An unexpected error occurred. Please try again.');
+                        });
+                    });
+                });
             });
 
-            // Add the search bar
-            const provider = new window.GeoSearch.OpenStreetMapProvider();
-            const search = new window.GeoSearch.GeoSearchControl({
-                provider: provider,
-                style: "bar",
-                showMarker: false,
-                autoClose: true,
-                searchLabel: "Search for a school or address..."
-            });
-            map.addControl(search);
-
-            map.on("geosearch/showlocation", (result) => {
-                const newLat = result.location.y;
-                const newLng = result.location.x;
-                marker.setLatLng([newLat, newLng]);
-                map.setView([newLat, newLng], 16); // Zoom to the search result
-                updateFields(newLat, newLng);
-
-                // Update address and school name inputs with search results
-                nameInput.value = result.location.label.split(',')[0];
-                addressInput.value = result.location.label;
+            noButton.addEventListener('click', function() {
+                hideModal(confirmModal, confirmModalContent);
             });
 
-            document.getElementById("schoolForm").addEventListener("submit", function (e) {
-                e.preventDefault();
-                Swal.fire({
-                    title: "Are you sure?",
-                    text: "Please confirm to save the school and admin.",
-                    icon: "warning",
-                    showCancelButton: true,
-                    confirmButtonColor: "#16a34a",
-                    cancelButtonColor: "#d33",
-                    confirmButtonText: "Yes, save it!"
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        document.getElementById("loadingOverlay").classList.remove("hidden");
-                        this.submit();
+            successModalClose.addEventListener('click', function() {
+                hideModal(successModal, successModalContent, () => {
+                    window.location.href = "{{ route('admin.schools.index') }}";
+                });
+            });
+
+            [confirmModal, successModal, loadingModal].forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target.id === modal.id || e.target.closest('.loader') === null) {
+                        if (modal.id !== 'loadingModal') {
+                            hideModal(modal, modal.querySelector('[id$="Content"]'));
+                        }
                     }
                 });
             });

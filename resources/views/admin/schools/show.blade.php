@@ -1,181 +1,142 @@
 <x-layout>
-<div class="container mx-auto px-4 py-6">
-    <div class="flex items-center space-x-8 mb-8">
-        @if($school->image)
-            <img src="{{ asset('storage/' . $school->image) }}" alt="School Logo"
-                 class="w-32 h-32 object-cover rounded-full border-4 border-green-600 shadow-md">
-        @else
-            <div class="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 border-4 border-gray-300 shadow-md">
-                No Logo
-            </div>
-        @endif
+    @push('styles')
+        {{-- Leaflet CSS --}}
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+              integrity="sha256-p4NxNIDN1/rXgSNGF0K6w6rBwz7jMv1z5kPq30sN6qI=" crossorigin="" />
+        <style>
+            #map {
+                height: 500px;
+                width: 100%;
+                border-radius: 0.75rem;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+        </style>
+    @endpush
 
-        <div>
-            <h1 class="text-4xl font-bold text-gray-800">{{ $school->school_name }}</h1>
-            <h1 class="text-lg mt-2 font-bold text-gray-800">{{ $school->principal}}</h1>
-            <p class="text-lg text-gray-600 ">{{ $school->address }}</p>
-            <p class="text-md text-gray-500">{{ $school->school_email }}</p>
-        </div>
-    </div>
-
-    <div class="mb-4 border-b border-gray-200">
-        <ul class="flex space-x-4">
-            <li>
-                <a href="#admin" class="tab-link font-semibold text-green-600 border-b-2 border-green-600 pb-2" onclick="showTab('admin')">School Admin</a>
-            </li>
-            <li>
-                <a href="#teachers" class="tab-link font-semibold text-gray-600 hover:text-green-600 pb-2" onclick="showTab('teachers')">Teachers</a>
-            </li>
-            <li>
-                <a href="#students" class="tab-link font-semibold text-gray-600 hover:text-green-600 pb-2" onclick="showTab('students')">Students</a>
-            </li>
-        </ul>
-    </div>
-
-    <div id="admin" class="tab-content">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-2xl font-bold text-gray-800">School Administrator</h2>
-            <a href="{{ route('admin.users.create', $school->id) }}"
-               class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
-                Add User
+    <div class="container mx-auto px-4 py-6">
+        {{-- Header --}}
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">School & Administrator Details</h1>
+            <a href="{{ route('admin.schools.index') }}"
+               class="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-full transition shadow-sm">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Schools
             </a>
         </div>
 
-        @if ($school->user)
-            <div class="bg-white border rounded-lg px-4 py-3 flex justify-between items-center shadow-sm">
-                <div>
-                    <p class="text-lg font-semibold text-gray-900">
-                        {{ $school->user->first_name }} {{ $school->user->last_name }}
-                    </p>
-                    <p class="text-sm text-gray-700">{{ $school->user->email }}</p>
-                    <p class="text-sm text-gray-700">{{ $school->user->cp_no }}</p>
-                    <span class="inline-block text-sm px-2 py-1 mt-1 bg-green-100 text-green-800 rounded">
-                        {{ ucfirst($school->user->role) }}
-                    </span>
+        {{-- Card --}}
+        <div class="bg-white p-6 rounded shadow-md space-y-6">
+            {{-- School Info --}}
+            <div>
+                <h2 class="text-xl font-semibold mb-4">School Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-semibold mb-1">School Name</label>
+                        <p class="w-full bg-gray-50 border border-gray-200 px-3 py-2 rounded">
+                            {{ $school->school_name }}
+                        </p>
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">School Address</label>
+                        <p class="w-full bg-gray-50 border border-gray-200 px-3 py-2 rounded">
+                            {{ $school->address }}
+                        </p>
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">School Email</label>
+                        <p class="w-full bg-gray-50 border border-gray-200 px-3 py-2 rounded">
+                            {{ $school->school_email }}
+                        </p>
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">Principal</label>
+                        <p class="w-full bg-gray-50 border border-gray-200 px-3 py-2 rounded">
+                            {{ $school->principal }}
+                        </p>
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">School Logo</label>
+                        @if($school->image)
+                            <img src="{{ asset('storage/' . $school->image) }}" 
+                                 alt="Logo" class="w-16 h-16 mt-2 rounded-md">
+                        @else
+                            <p class="text-gray-500">No logo uploaded</p>
+                        @endif
+                    </div>
                 </div>
+            </div>
 
-                <div class="flex space-x-3">
-                    <a href="{{ route('admin.users.edit', $school->user->id) }}" class="hover:scale-110 transition">
-                        <img src="{{ asset('images/icons/edit.png') }}" alt="Edit" class="w-5 h-5">
-                    </a>
-                    <form action="" method="POST" onsubmit="return confirm('Delete this user?');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="hover:scale-110 transition">
-                            <img src="{{ asset('images/icons/delete.png') }}" alt="Delete" class="w-5 h-5">
-                        </button>
-                    </form>
+            {{-- Admin Officer --}}
+            <div>
+                <h2 class="text-xl font-semibold mb-4">Administrative Officer</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-semibold mb-1">First Name</label>
+                        <p class="w-full bg-gray-50 border border-gray-200 px-3 py-2 rounded">
+                            {{ $admin->first_name ?? 'N/A' }}
+                        </p>
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">Last Name</label>
+                        <p class="w-full bg-gray-50 border border-gray-200 px-3 py-2 rounded">
+                            {{ $admin->last_name ?? 'N/A' }}
+                        </p>
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">Email</label>
+                        <p class="w-full bg-gray-50 border border-gray-200 px-3 py-2 rounded">
+                            {{ $admin->email ?? 'N/A' }}
+                        </p>
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-1">Contact Number</label>
+                        <p class="w-full bg-gray-50 border border-gray-200 px-3 py-2 rounded">
+                            {{ $admin->cp_no ?? 'N/A' }}
+                        </p>
+                    </div>
                 </div>
             </div>
-        @else
-            <p class="text-gray-500 text-base">No school admin linked.</p>
-        @endif
-    </div>
 
-    <div id="teachers" class="tab-content hidden">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-2xl font-bold text-gray-800">Teachers</h2>
-            <a href="{{ route('admin.users.create', $school->id) }}"
-               class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
-                Add User
-            </a>
+            {{-- Location --}}
+            <div>
+                <h2 class="text-xl font-semibold mb-4">School Location</h2>
+                <div id="map"></div>
+                <p id="map-address-display" class="text-sm text-gray-600 mt-2">
+                    Address: {{ $school->address }}
+                </p>
+            </div>
         </div>
-
-        @php $teachers = $school->users->where('role', 'teacher'); @endphp
-
-        @if($teachers->isEmpty())
-            <p class="text-gray-500 text-base">No teachers found.</p>
-        @else
-            <ul class="space-y-2">
-                @foreach ($teachers as $teacher)
-                    <li class="bg-white border rounded-lg px-4 py-3 flex justify-between items-center shadow-sm">
-                        <div>
-                            <p class="text-lg font-semibold text-gray-900">
-                                {{ $teacher->first_name }} {{ $teacher->last_name }}
-                            </p>
-                            <p class="text-sm text-gray-700">{{ $teacher->email }}</p>
-                            <p class="text-sm text-gray-700">{{ $teacher->cp_no }}</p>
-                            <span class="inline-block text-sm px-2 py-1 mt-1 bg-blue-100 text-blue-800 rounded">
-                                {{ ucfirst($teacher->role) }}
-                            </span>
-                        </div>
-                        <div class="flex space-x-3">
-                            <a href="{{ route('admin.users.edit', $teacher->id) }}" class="hover:scale-110 transition">
-                                <img src="{{ asset('images/icons/edit.png') }}" alt="Edit" class="w-5 h-5">
-                            </a>
-                            <form action="" method="POST" onsubmit="return confirm('Delete this user?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="hover:scale-110 transition">
-                                    <img src="{{ asset('images/icons/delete.png') }}" alt="Delete" class="w-5 h-5">
-                                </button>
-                            </form>
-                        </div>
-                    </li>
-                @endforeach
-            </ul>
-        @endif
     </div>
 
-    <div id="students" class="tab-content hidden">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-2xl font-bold text-gray-800">Students</h2>
-            <a href="{{ route('admin.users.create', $school->id) }}"
-               class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
-                Add User
-            </a>
-        </div>
-
-        @php $students = $school->users->where('role', 'student'); @endphp
-
-        @if($students->isEmpty())
-            <p class="text-gray-500 text-base">No students found.</p>
-        @else
-            <ul class="space-y-2">
-                @foreach ($students as $student)
-                    <li class="bg-white border rounded-lg px-4 py-3 flex justify-between items-center shadow-sm">
-                        <div>
-                            <p class="text-lg font-semibold text-gray-900">
-                                {{ $student->first_name }} {{ $student->last_name }}
-                            </p>
-                            <p class="text-sm text-gray-700">{{ $student->email }}</p>
-                            <p class="text-sm text-gray-700">{{ $student->cp_no }}</p>
-                            <span class="inline-block text-sm px-2 py-1 mt-1 bg-yellow-100 text-yellow-800 rounded">
-                                {{ ucfirst($student->role) }}
-                            </span>
-                        </div>
-                        <div class="flex space-x-3">
-                            <a href="{{ route('admin.users.edit', $student->id) }}" class="hover:scale-110 transition">
-                                <img src="{{ asset('images/icons/edit.png') }}" alt="Edit" class="w-5 h-5">
-                            </a>
-                            <form action="" method="POST" onsubmit="return confirm('Delete this user?');">
-                                @csrf
-                                @method('DELETE')1
-                                <button type="submit" class="hover:scale-110 transition">
-                                    <img src="{{ asset('images/icons/delete.png') }}" alt="Delete" class="w-5 h-5">
-                                </button>
-                            </form>
-                        </div>
-                    </li>
-                @endforeach
-            </ul>
-        @endif
-    </div>
-</div>
+    @push('scripts')
+        {{-- Leaflet JS --}}
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+                integrity="sha256-20nqc1w3pw9jZ3f9W5Z5d9E6B7x9+oGgH4fJ1kC10A1y/sA==" crossorigin="">
+        </script>
 
 <script>
-    function showTab(tab) {
-        const contents = document.querySelectorAll('.tab-content');
-        const links = document.querySelectorAll('.tab-link');
+    document.addEventListener('DOMContentLoaded', function () {
+        @if(!empty($school->lat) && !empty($school->lng))
+            const lat = {{ $school->lat }};
+            const lng = {{ $school->lng }};
 
-        contents.forEach(c => c.classList.add('hidden'));
-        links.forEach(l => {
-            l.classList.remove('text-green-600', 'border-green-600', 'border-b-2');
-            l.classList.add('text-gray-600');
-        });
+            const map = L.map('map').setView([lat, lng], 16);
 
-        document.getElementById(tab).classList.remove('hidden');
-        document.querySelector(`a[href="#${tab}"]`).classList.add('text-green-600', 'border-b-2', 'border-green-600');
-    }
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+
+            L.marker([lat, lng]).addTo(map)
+                .bindPopup(`<b>{{ $school->school_name }}</b><br>{{ $school->address }}`)
+                .openPopup();
+        @else
+            document.getElementById('map').style.display = 'none';
+            document.getElementById('map-address-display').textContent = 'Location coordinates are not available for this school.';
+        @endif
+    });
 </script>
+
+    @endpush
 </x-layout>

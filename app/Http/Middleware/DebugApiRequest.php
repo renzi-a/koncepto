@@ -10,7 +10,6 @@ class DebugApiRequest
 {
     public function handle(Request $request, Closure $next)
     {
-        // Only log for the /api/admin/orders endpoint to keep logs clean
         if (str_starts_with($request->path(), 'api/admin/orders')) {
             Log::info('--- DebugApiRequest Middleware (from app/Http/Middleware) ---');
             Log::info('URL:', ['url' => $request->fullUrl()]);
