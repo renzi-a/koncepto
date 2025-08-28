@@ -11,20 +11,21 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             
             <div class="bg-white rounded-lg shadow p-6 flex flex-col hover:shadow-lg transition-shadow duration-300">
-                <div class="text-sm text-gray-500 font-medium mb-4">Total Orders</div>
-                <div class="flex items-center justify-between w-full">
-                    <div>
-                        <div class="text-4xl font-bold text-blue-600">{{ $totalOrders }}</div>
-                        <p class="text-xs text-gray-400">All orders placed</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-sm text-gray-500 font-medium mb-1">Breakdown</p>
-                        <p class="text-xs text-gray-600">Regular: <span class="font-bold">{{ $regularOrderCount }}</span></p>
-                        <p class="text-xs text-gray-600">Custom: <span class="font-bold">{{ $customOrderCount }}</span></p>
-                    </div>
-                </div>
+    <div class="text-sm text-gray-500 font-medium mb-4">Total Orders</div>
+    <div class="flex items-center justify-between w-full">
+        <div>
+            <div class="text-4xl font-bold text-blue-600">
+                {{ $regularOrderCount + $customOrderCount }}
             </div>
-
+            <p class="text-xs text-gray-400">All orders placed</p>
+        </div>
+        <div class="text-right">
+            <p class="text-sm text-gray-500 font-medium mb-1">Breakdown</p>
+            <p class="text-xs text-gray-600">Regular: <span class="font-bold">{{ $regularOrderCount }}</span></p>
+            <p class="text-xs text-gray-600">Custom: <span class="font-bold">{{ $customOrderCount }}</span></p>
+        </div>
+    </div>
+</div>
             <div class="bg-white rounded-lg shadow p-6 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300">
                 <div class="text-sm text-gray-500 font-medium">Delivered Orders</div>
                 <div class="text-4xl font-bold text-green-600 mt-2">
@@ -103,7 +104,7 @@
                                     break;
                                 case 'To be delivered':
                                 case 'Approved':
-                                case 'Gathering':
+                                case 'Processing':
                                 case 'Delivering':
                                     $statusColor = 'bg-yellow-100 text-yellow-800';
                                     break;

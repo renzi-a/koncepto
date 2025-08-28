@@ -14,8 +14,13 @@ class OrderController extends Controller
 {
     public function adminOrders(Request $request)
     {
+        $section = $request->get('section', 'schools'); // default to schools
         $tab = $request->get('tab', 'all');
-        $status = $request->get('status', 'All');
+        $status = strtolower($request->get('status', 'all'));
+
+        // Define the pending statuses for each order type
+        $normalPendingStatuses = ['new', 'processing', 'to be delivered'];
+        $customPendingStatuses = ['to be quoted', 'quoted', 'approved', 'processing', 'to be delivered'];
 
         $normalOrdersQuery = Orders::with('user.school');
         $customOrdersQuery = CustomOrder::with('user.school')
@@ -24,46 +29,50 @@ class OrderController extends Controller
                 $query->where('gathered', true);
             }]);
 
-        if ($tab === 'orders') {
-            if ($status !== 'All') {
-                $normalOrdersQuery->where('status', $status);
-            } else {
-                $normalOrdersQuery->where('status', '!=', 'delivered');
+        if ($section === 'schools') {
+            if ($tab === 'orders') {
+                if ($status !== 'all') {
+                    $normalOrdersQuery->where('status', $status);
+                } else {
+                    $normalOrdersQuery->whereIn('status', $normalPendingStatuses);
+                }
+            } elseif ($tab === 'all') {
+                // For 'all' tab, we handle a specific status filter
+                if ($status !== 'all') {
+                    $normalOrdersQuery->where('status', $status);
+                    $customOrdersQuery->where('status', $status);
+                } else {
+                    $normalOrdersQuery->whereIn('status', $normalPendingStatuses);
+                    $customOrdersQuery->whereIn('status', $customPendingStatuses);
+                }
+            } elseif ($tab === 'custom') {
+                if ($status !== 'all') {
+                    $customOrdersQuery->where('status', $status);
+                } else {
+                    $customOrdersQuery->whereIn('status', $customPendingStatuses);
+                }
+            } elseif ($tab === 'completed') {
+                $normalOrdersQuery->where('status', 'delivered');
+                $customOrdersQuery->where('status', 'delivered');
             }
-        } elseif ($tab === 'all') {
-            $normalOrdersQuery->where('status', '!=', 'delivered');
-            $customOrdersQuery->where('status', '!=', 'delivered');
-        } elseif ($tab === 'custom') {
-            if ($status !== 'All') {
-                $customOrdersQuery->where('status', $status);
-            } else {
-                $customOrdersQuery->where('status', '!=', 'delivered');
-            }
-        } elseif ($tab === 'completed') {
-            $normalOrdersQuery->where('status', 'delivered');
-            $customOrdersQuery->where('status', 'delivered');
         }
 
-        $normalOrders = $normalOrdersQuery->latest()->get();
-        foreach ($normalOrders as $order) {
-            $order->is_custom = false;
-        }
-
-        $customOrders = $customOrdersQuery->latest()->get();
-        foreach ($customOrders as $order) {
-            $order->is_custom = true;
-        }
+        $normalOrders = $normalOrdersQuery->latest()->get()->each(fn($o) => $o->is_custom = false);
+        $customOrders = $customOrdersQuery->latest()->get()->each(fn($o) => $o->is_custom = true);
 
         if ($tab === 'orders') {
             $orders = $normalOrders;
         } elseif ($tab === 'custom') {
             $orders = $customOrders;
         } else {
-            $orders = $normalOrders->merge($customOrders)->sortByDesc('created_at')->values();
+            // ✅ FIX: Use concat() to combine the collections,
+            // which prevents data loss from duplicate keys.
+            $orders = $normalOrders->concat($customOrders)->sortByDesc('created_at')->values();
         }
-
-        $normalOrdersCount = Orders::where('status', '!=', 'delivered')->count();
-        $customOrdersCount = CustomOrder::where('status', '!=', 'delivered')->count();
+        
+        // Count the orders for each tab
+        $normalOrdersCount = Orders::whereIn('status', $normalPendingStatuses)->count();
+        $customOrdersCount = CustomOrder::whereIn('status', $customPendingStatuses)->count();
         $allOrdersCount = $normalOrdersCount + $customOrdersCount;
 
         $completedNormalCount = Orders::where('status', 'delivered')->count();
@@ -76,6 +85,7 @@ class OrderController extends Controller
             'customOrders',
             'tab',
             'status',
+            'section',
             'normalOrdersCount',
             'customOrdersCount',
             'allOrdersCount',
@@ -163,8 +173,8 @@ class OrderController extends Controller
     {
         $order = CustomOrder::with('user.school', 'items')->findOrFail($id);
     
-        // Add this check to correctly redirect to the gather view
-        if (strtolower($order->status) === 'gathering') {
+        // Change 'gathering' to 'processing'
+        if (strtolower($order->status) === 'processing') {
             return redirect()->route('admin.custom-orders.gather', $order->id);
         }
     
@@ -175,8 +185,8 @@ class OrderController extends Controller
             $searchLower = strtolower($search);
             $items = $items->filter(function ($item) use ($searchLower) {
                 return str_contains(strtolower($item['name']), $searchLower) ||
-                       str_contains(strtolower($item['brand'] ?? ''), $searchLower) ||
-                       str_contains(strtolower($item['description'] ?? ''), $searchLower);
+                           str_contains(strtolower($item['brand'] ?? ''), $searchLower) ||
+                           str_contains(strtolower($item['description'] ?? ''), $searchLower);
             });
         }
     
@@ -225,15 +235,16 @@ class OrderController extends Controller
         $order->save();
 
         return redirect()->route('admin.orders', $orderId)
-                         ->with('success', 'Prices saved and order status updated to quoted.');
+                          ->with('success', 'Prices saved and order status updated to quoted.');
     }
     
     public function gather($id)
     {
         $order = CustomOrder::with('items')->findOrFail($id);
 
+        // Change 'approved' and 'gathering' to 'processing'
         if (strtolower($order->status) === 'approved') {
-            $order->status = 'gathering';
+            $order->status = 'processing';
             $order->save();
         }
         
@@ -280,49 +291,50 @@ class OrderController extends Controller
         return redirect()->route('admin.orders')->with('warning', 'Not all items have been gathered yet. The order status has not been changed.');
     }
 
-public function gatherNormal($id)
-{
-    $order = Orders::with('orderDetails.product')->findOrFail($id);
+    public function gatherNormal($id)
+    {
+        $order = Orders::with(['orderDetails.product', 'user.school'])->findOrFail($id);
 
-    // Set status to 'processing' if not already. This happens once.
-    if (strtolower($order->status) === 'new') {
-        $order->status = 'processing';
-        $order->save();
+        if (strtolower($order->status) === 'new') {
+            $order->status = 'processing';
+            $order->save();
+        }
+        
+        $items = $order->orderDetails;
+        $totalItems = $items->count();
+        $gatheredItems = $items->where('gathered', true)->count();
+        
+        return view('admin.gather-normal', compact('order', 'items', 'totalItems', 'gatheredItems'));
     }
-    
-    // Eager load relationships for efficient data retrieval
-    $order->load(['orderDetails.product', 'user.school']);
+    public function toggleNormalGathered(Request $request, $id)
+    {
+        $orderDetail = OrderDetail::findOrFail($id);
+        $orderDetail->gathered = $request->input('gathered');
+        $orderDetail->save();
 
-    $items = $order->orderDetails;
-    $totalItems = $items->count();
-    $gatheredItems = $items->where('gathered', true)->count();
-    
-    return view('admin.gather-normal', compact('order', 'items', 'totalItems', 'gatheredItems'));
-}
-
-public function toggleNormalGathered(Request $request, $id)
-{
-    // The ID here refers to the OrderDetail ID
-    $orderDetail = OrderDetail::findOrFail($id);
-    $orderDetail->gathered = $request->input('gathered');
-    $orderDetail->save();
-
-    return response()->json(['success' => true]);
-}
-
-public function saveNormalGatheringInfo(Request $request, $orderId)
-{
-    $order = Orders::with('orderDetails')->findOrFail($orderId);
-    
-    $gatheredCount = $order->orderDetails->where('gathered', true)->count();
-    $totalCount = $order->orderDetails->count();
-
-    if ($gatheredCount === $totalCount) {
-        $order->status = 'to be delivered';
-        $order->save();
-        return redirect()->route('admin.orders')->with('success', 'All items for the order have been gathered. Status updated to "To be Delivered".');
+        return response()->json(['success' => true]);
     }
 
-    return redirect()->back()->with('warning', 'Not all items have been gathered yet.');
-}
+    public function saveNormalGatheringInfo(Request $request, $orderId)
+    {
+        $order = Orders::with('orderDetails')->findOrFail($orderId);
+
+        $allGathered = $order->orderDetails->every(function ($item) {
+            return $item->gathered;
+        });
+
+        if ($allGathered) {
+            $order->status = 'To be delivered';
+            $order->save();
+            $message = 'Order status updated to "To be Delivered" and progress saved.';
+        } else {
+            $message = 'Processing progress saved.';
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'redirect' => route('admin.orders')
+        ]);
+    }
 }

@@ -12,7 +12,6 @@
             <table class="min-w-full table-auto text-sm text-left text-gray-600">
                 <thead class="bg-gray-100 text-gray-800 font-semibold">
                     <tr>
-                        <th class="px-4 py-3">Photo</th>
                         <th class="px-4 py-3">Name</th>
                         <th class="px-4 py-3">Brand</th>
                         <th class="px-4 py-3">Unit</th>
@@ -25,13 +24,6 @@
                     @php $grandTotal = 0; @endphp
                     @forelse ($items as $item)
                         <tr class="border-t hover:bg-gray-50 transition-colors">
-                            <td class="px-4 py-2">
-                                @if (!empty($item['photo']))
-                                    <img src="{{ asset('storage/' . $item['photo']) }}" class="w-16 h-16 object-cover rounded" />
-                                @else
-                                    <span class="text-gray-400 italic">No photo</span>
-                                @endif
-                            </td>
                             <td class="px-4 py-2 font-medium text-gray-800">{{ $item['name'] }}</td>
                             <td class="px-4 py-2">{{ $item['brand'] ?? 'N/A' }}</td>
                             <td class="px-4 py-2">{{ $item['unit'] }}</td>

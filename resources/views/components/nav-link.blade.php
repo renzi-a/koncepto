@@ -32,156 +32,181 @@
 
     
 <body class="h-full bg-[#F0F4F9]">
-<header class="flex items-center border-b border-gray-300 py-3 px-4 sm:px-10 bg-[#56AB2F] min-h-[65px] tracking-wide relative z-50">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <div class="flex items-center justify-between w-full max-w-screen-xl mx-auto gap-4">
-        <a href="{{ route('user.home') }}" class="flex-shrink-0">
-            <img src="{{ asset('images/logo.png')}}" alt="logo" class="w-[134px]" />
-        </a>
-
-        <div class="flex-grow max-w-2xl w-full mx-4">
-            <form method="GET" action="{{ route('user.home') }}" id="searchForm">
-                <div class="flex items-center bg-gray-100 px-4 py-2.5 border border-gray-200 focus-within:border-slate-900 transition-all rounded-xl">
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Search something..." class="w-full text-sm outline-none bg-transparent pr-2" id="searchInput" autocomplete="off" />
-                    <button type="submit" hidden></button>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192.904 192.904" width="16px" class="cursor-pointer fill-gray-400">
-                        <path d="m190.707 180.101-47.078-47.077c11.702-14.072 18.752-32.142 18.752-51.831C162.381 36.423 125.959 0 81.191 0 36.422 0 0 36.423 0 81.193c0 44.767 36.422 81.187 81.191 81.187 19.688 0 37.759-7.049 51.831-18.751l47.079 47.078a7.474 7.474 0 0 0 5.303 2.197 7.498 7.498 0 0 0 5.303-12.803zM15 81.193C15 44.694 44.693 15 81.191 15c36.497 0 66.189 29.694 66.189 66.193 0 36.496-29.692 66.187-66.189 66.187C44.693 147.38 15 117.689 15 81.193z"></path>
-                    </svg>
-                </div>
-            </form>
-        </div>
-
-        <div class="flex items-center gap-14">
-            @auth
-            <a href="{{ route('cart.index') }}" class="relative inline-block">
-                <img src="{{ asset('images/cart.png') }}" alt="Cart" class="w-7 h-7 hover:opacity-80 transition transform hover:scale-110 duration-200" />
-                @php
-                    $cartCount = \App\Models\CartItem::whereHas('cart', function ($q) {
-                        $q->where('user_id', auth()->id());
-                    })->sum('quantity');
-                @endphp
-                @if($cartCount > 0)
-                    <span id="cartBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center transition">
-                        {{ $cartCount }}
-                    </span>
-                @endif
+    <header class="flex items-center border-b border-gray-300 py-3 px-4 sm:px-10 bg-[#56AB2F] min-h-[65px] tracking-wide relative z-50">
+        <div class="flex items-center justify-between w-full max-w-screen-xl mx-auto gap-4">
+            <a href="{{ route('user.home') }}" class="flex-shrink-0">
+                <img src="{{ asset('images/logo.png')}}" alt="logo" class="w-[134px]" />
             </a>
-            @endauth
 
-            @unless (request()->routeIs('user.chat.full'))
-            @php
-                $notifications = \App\Models\Notification::where('user_id', auth()->id())
-                    ->latest()
-                    ->take(7)
-                    ->get();
+            <div class="flex-grow max-w-2xl w-full mx-4">
+                <form method="GET" action="{{ route('user.home') }}" id="searchForm">
+                    <div class="flex items-center bg-gray-100 px-4 py-2.5 border border-gray-200 focus-within:border-slate-900 transition-all rounded-xl">
+                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Search something..." class="w-full text-sm outline-none bg-transparent pr-2" id="searchInput" autocomplete="off" />
+                        <button type="submit" hidden></button>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192.904 192.904" width="16px" class="cursor-pointer fill-gray-400">
+                            <path d="m190.707 180.101-47.078-47.077c11.702-14.072 18.752-32.142 18.752-51.831C162.381 36.423 125.959 0 81.191 0 36.422 0 0 36.423 0 81.193c0 44.767 36.422 81.187 81.191 81.187 19.688 0 37.759-7.049 51.831-18.751l47.079 47.078a7.474 7.474 0 0 0 5.303 2.197 7.498 7.498 0 0 0 5.303-12.803zM15 81.193C15 44.694 44.693 15 81.191 15c36.497 0 66.189 29.694 66.189 66.193 0 36.496-29.692 66.187-66.189 66.187C44.693 147.38 15 117.689 15 81.193z"></path>
+                        </svg>
+                    </div>
+                </form>
+            </div>
 
-                $unreadCount = $notifications->where('is_read', false)->count();
-            @endphp
-
-            <div class="relative">
-                <button id="notificationBtn" class="relative">
-                    <img src="{{ asset('images/bell.png') }}" alt="Notifications" class="w-7 h-7 hover:opacity-80 transition transform hover:scale-110 duration-200" />
-                    @if ($unreadCount > 0)
-                        <span id="notificationBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                            {{ $unreadCount }}
+            <div class="flex items-center gap-14">
+                @auth
+                <a href="{{ route('cart.index') }}" class="relative inline-block">
+                    <img src="{{ asset('images/cart.png') }}" alt="Cart" class="w-7 h-7 hover:opacity-80 transition transform hover:scale-110 duration-200" />
+                    @php
+                        $cartCount = \App\Models\CartItem::whereHas('cart', function ($q) {
+                            $q->where('user_id', auth()->id());
+                        })->sum('quantity');
+                    @endphp
+                    @if($cartCount > 0)
+                        <span id="cartBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center transition">
+                            {{ $cartCount }}
                         </span>
                     @endif
-                </button>
+                </a>
+                @endauth
 
-                <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                    <div class="p-3 font-semibold border-b text-gray-700">Notifications</div>
-                    <ul class="max-h-60 overflow-y-auto" id="notificationList">
-                        @foreach($notifications as $notification)
-                            <li class="px-4 py-2 text-sm border-b hover:bg-gray-100 transition {{ $notification->is_read ? 'text-gray-400' : 'text-gray-800 font-medium' }}">
-                                <a href="{{ route('user.chat.full') }}" class="block hover:underline">
-                                    {{ $notification->message }}
-                                    <div class="text-xs text-gray-400">{{ $notification->created_at->diffForHumans() }}</div>
-                                </a>
-                            </li>
-                        @endforeach
-                    </ul>
-                    <a href="/notifications" class="block text-center text-blue-500 hover:underline text-sm py-2">View All</a>
+                @unless (request()->routeIs('user.chat.full'))
+                @php
+                    $notifications = \App\Models\Notification::where('user_id', auth()->id())
+                        ->latest()
+                        ->take(7)
+                        ->get();
+
+                    $unreadCount = $notifications->where('is_read', false)->count();
+                @endphp
+
+                <div class="relative">
+                    <button id="notificationBtn" class="relative">
+                        <img src="{{ asset('images/bell.png') }}" alt="Notifications" class="w-7 h-7 hover:opacity-80 transition transform hover:scale-110 duration-200" />
+                        @if ($unreadCount > 0)
+                            <span id="notificationBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                                {{ $unreadCount }}
+                            </span>
+                        @endif
+                    </button>
+
+                    <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                        <div class="p-3 font-semibold border-b text-gray-700">Notifications</div>
+                        <ul class="max-h-60 overflow-y-auto" id="notificationList">
+                            @foreach($notifications as $notification)
+                                <li class="px-4 py-2 text-sm border-b hover:bg-gray-100 transition {{ $notification->is_read ? 'text-gray-400' : 'text-gray-800 font-medium' }}">
+                                    @php
+                                        $notificationRoute = match($notification->type) {
+                                            'order_status_update' => route('user.orders'),
+                                            'custom_order_status_update' => route('user.custom-orders'),
+                                            'new_message' => route('user.chat.full'),
+                                            default => '#',
+                                        };
+                                    @endphp
+                                    <a href="{{ $notificationRoute }}" class="block hover:underline">
+                                        {{ $notification->message }}
+                                        <div class="text-xs text-gray-400">{{ $notification->created_at->diffForHumans() }}</div>
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                        <a href="/notifications" class="block text-center text-blue-500 hover:underline text-sm py-2">View All</a>
+                    </div>
                 </div>
+                @endunless
+
+                <a href="{{ route('user.dashboard') }}">
+                    <img src="{{ asset('images/user.png') }}" alt="Profile" class="w-7 h-7 hover:opacity-80 transition" />
+                </a>
             </div>
-            @endunless
-
-            <a href="{{ route('user.dashboard') }}">
-                <img src="{{ asset('images/user.png') }}" alt="Profile" class="w-7 h-7 hover:opacity-80 transition" />
-            </a>
-
         </div>
-    </div>
-</header>
+    </header>
 
-{{ $slot }}
-<x-chat-preview />
+    {{ $slot }}
+    <x-chat-preview />
 </body>
 
 <script>
-const input = document.getElementById('searchInput');
-let timeout = null;
-if (input) {
-    input.addEventListener('input', function () {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => {
-            document.getElementById('searchForm').submit();
-        }, 500);
-    });
-}
+    const input = document.getElementById('searchInput');
+    let timeout = null;
+    if (input) {
+        input.addEventListener('input', function () {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                document.getElementById('searchForm').submit();
+            }, 500);
+        });
+    }
 
-const bell = document.getElementById('notificationBtn');
-const dropdown = document.getElementById('notificationDropdown');
-const badge = document.getElementById('notificationBadge');
-let hasMarked = false;
+    const bell = document.getElementById('notificationBtn');
+    const dropdown = document.getElementById('notificationDropdown');
+    const badge = document.getElementById('notificationBadge');
+    let hasMarked = false;
 
-if (bell && dropdown) {
-    bell.addEventListener('click', () => {
-        dropdown.classList.toggle('hidden');
-        if (!hasMarked && !dropdown.classList.contains('hidden')) {
-            hasMarked = true;
-            fetch('/notifications/mark-read', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Content-Type': 'application/json'
-                }
-            }).then(() => {
-                if (badge) badge.remove();
-            });
-        }
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!bell.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.classList.add('hidden');
-        }
-    });
-}
-
-setInterval(() => {
-    fetch('/notifications')
-        .then(response => response.text())
-        .then(html => {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const newBadge = doc.querySelector('#notificationBadge');
-            const newList = doc.querySelector('#notificationList');
-
-            if (newBadge) {
-                if (!document.getElementById('notificationBadge')) {
-                    bell.insertAdjacentHTML('beforeend', newBadge.outerHTML);
-                } else {
-                    document.getElementById('notificationBadge').innerText = newBadge.innerText;
-                }
-            } else {
-                const badgeEl = document.getElementById('notificationBadge');
-                if (badgeEl) badgeEl.remove();
-            }
-
-            if (newList) {
-                const currentList = document.getElementById('notificationList');
-                currentList.innerHTML = newList.innerHTML;
+    if (bell && dropdown) {
+        bell.addEventListener('click', () => {
+            dropdown.classList.toggle('hidden');
+            if (!hasMarked && !dropdown.classList.contains('hidden')) {
+                hasMarked = true;
+                fetch('/notifications/mark-read', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Content-Type': 'application/json'
+                    }
+                }).then(() => {
+                    if (badge) badge.remove();
+                    // Update the list item styles after marking as read
+                    document.querySelectorAll('#notificationList li').forEach(item => {
+                        item.classList.remove('font-medium', 'text-gray-800');
+                        item.classList.add('text-gray-400');
+                    });
+                });
             }
         });
-}, 5000);
+
+        document.addEventListener('click', (e) => {
+            if (!bell.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+    }
+
+    setInterval(() => {
+        fetch('/notifications/check-new')
+            .then(response => response.json())
+            .then(data => {
+                if (data.hasNew) {
+                    // Fetch the full notification list if there are new notifications
+                    fetch('/notifications')
+                        .then(response => response.text())
+                        .then(html => {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const newBadge = doc.querySelector('#notificationBadge');
+                            const newList = doc.querySelector('#notificationList');
+
+                            if (newBadge) {
+                                if (!document.getElementById('notificationBadge')) {
+                                    bell.insertAdjacentHTML('beforeend', newBadge.outerHTML);
+                                } else {
+                                    document.getElementById('notificationBadge').innerText = newBadge.innerText;
+                                }
+                            } else {
+                                const badgeEl = document.getElementById('notificationBadge');
+                                if (badgeEl) badgeEl.remove();
+                            }
+
+                            if (newList) {
+                                const currentList = document.getElementById('notificationList');
+                                currentList.innerHTML = newList.innerHTML;
+                            }
+
+                            // Show a temporary notification if the dropdown is not open
+                            if (dropdown.classList.contains('hidden')) {
+                                // You can implement a toast or a small pop-up here
+                                // Example: a simple alert
+                                // alert('You have new notifications!');
+                            }
+                        });
+                }
+            });
+    }, 5000);
 </script>

@@ -144,78 +144,79 @@ class UserController extends Controller
         return response()->json(['status' => 'marked']);
     }
     
-        public function dashboard(Request $request)
-    {
-        $school = Auth::user()->school;
-        $year = $request->input('year', Carbon::now()->year);
+public function dashboard(Request $request)
+{
+    $school = Auth::user()->school;
+    $year = $request->input('year', Carbon::now()->year);
 
-        // Filter orders by the selected year, specifying the table for `created_at`
-        $regularOrders = $school ? $school->orders()->whereYear('created_at', $year)->get() : collect();
-        $customOrders = $school ? $school->customOrder()->whereYear('custom_orders.created_at', $year)->get() : collect();
-            
-        $allOrders = $regularOrders->merge($customOrders);
-        $totalOrders = $allOrders->count();
-
-        $deliveredRegularOrders = $regularOrders->where('status', 'delivered')->count();
-        $deliveredCustomOrders = $customOrders->where('status', 'delivered')->count();
-        $deliveredOrders = $deliveredRegularOrders + $deliveredCustomOrders;
-
-        $regularOrderCount = $regularOrders->count();
-        $customOrderCount = $customOrders->count();
-
-        $regularItemsCount = $regularOrders->sum('quantity');
-        $customItemsCount = $customOrders->flatMap(fn ($order) => $order->items)->count();
-        $totalItemsCount = $regularItemsCount + $customItemsCount;
-
-        $pendingRegularOrders = $regularOrders->where('status', '!=', 'delivered')->count();
-        $pendingCustomOrders = $customOrders->where('status', '!=', 'delivered')->count();
-        $pendingOrdersCount = $pendingRegularOrders + $pendingCustomOrders;
-
-        $recentOrders = $regularOrders->sortByDesc('created_at')->take(5)->map(function ($order) {
-            $order->type = 'Regular';
-            return $order;
-        });
-
-        $recentCustomOrders = $customOrders->sortByDesc('created_at')->take(5)->map(function ($order) {
-            $order->type = 'Custom';
-            return $order;
-        });
-            
-        $combinedRecentOrders = $recentOrders->merge($recentCustomOrders)->sortByDesc('created_at')->take(5);
+    // Filter orders by the selected year, specifying the table for `created_at`
+    $regularOrders = $school ? $school->orders()->whereYear('created_at', $year)->get() : collect();
+    $customOrders = $school ? $school->customOrder()->whereYear('custom_orders.created_at', $year)->get() : collect();
         
-        $salesLabels = [];
-        $salesData = [];
+    $allOrders = $regularOrders->merge($customOrders);
+    $totalOrders = $allOrders->count();
 
-        if ($allOrders->isNotEmpty()) {
-            $firstOrderDate = $allOrders->min('created_at');
-            $lastOrderDate = $allOrders->max('created_at');
+    $deliveredRegularOrders = $regularOrders->where('status', 'delivered')->count();
+    $deliveredCustomOrders = $customOrders->where('status', 'delivered')->count();
+    $deliveredOrders = $deliveredRegularOrders + $deliveredCustomOrders;
 
-            $startMonth = Carbon::parse($firstOrderDate)->startOfMonth();
-            $endMonth = Carbon::parse($lastOrderDate)->startOfMonth();
+    $regularOrderCount = $regularOrders->count();
+    $customOrderCount = $customOrders->count();
 
-            for ($date = $startMonth; $date->lte($endMonth); $date->addMonth()) {
-                $salesLabels[] = $date->format('M');
-                
-                $monthlyRegularCount = $regularOrders->filter(fn ($order) => Carbon::parse($order->created_at)->isSameMonth($date))->count();
-                $monthlyCustomCount = $customOrders->filter(fn ($order) => Carbon::parse($order->created_at)->isSameMonth($date))->count();
-                
-                $salesData[] = $monthlyRegularCount + $monthlyCustomCount;
-            }
+    $regularItemsCount = $regularOrders->sum('quantity');
+    $customItemsCount = $customOrders->flatMap(fn ($order) => $order->items)->count();
+    $totalItemsCount = $regularItemsCount + $customItemsCount;
+
+    // Corrected logic for pending orders
+    $pendingRegularOrders = $regularOrders->whereIn('status', ['new', 'processing', 'To be delivered'])->count();
+    $pendingCustomOrders = $customOrders->whereIn('status', ['to be quoted', 'quoted', 'approved', 'processing', 'delivering', 'To be delivered'])->count();
+    $pendingOrdersCount = $pendingRegularOrders + $pendingCustomOrders;
+
+    $recentOrders = $regularOrders->sortByDesc('created_at')->take(5)->map(function ($order) {
+        $order->type = 'Regular';
+        return $order;
+    });
+
+    $recentCustomOrders = $customOrders->sortByDesc('created_at')->take(5)->map(function ($order) {
+        $order->type = 'Custom';
+        return $order;
+    });
+        
+    $combinedRecentOrders = $recentOrders->merge($recentCustomOrders)->sortByDesc('created_at')->take(5);
+    
+    $salesLabels = [];
+    $salesData = [];
+
+    if ($allOrders->isNotEmpty()) {
+        $firstOrderDate = $allOrders->min('created_at');
+        $lastOrderDate = $allOrders->max('created_at');
+
+        $startMonth = Carbon::parse($firstOrderDate)->startOfMonth();
+        $endMonth = Carbon::parse($lastOrderDate)->startOfMonth();
+
+        for ($date = $startMonth; $date->lte($endMonth); $date->addMonth()) {
+            $salesLabels[] = $date->format('M');
+            
+            $monthlyRegularCount = $regularOrders->filter(fn ($order) => Carbon::parse($order->created_at)->isSameMonth($date))->count();
+            $monthlyCustomCount = $customOrders->filter(fn ($order) => Carbon::parse($order->created_at)->isSameMonth($date))->count();
+            
+            $salesData[] = $monthlyRegularCount + $monthlyCustomCount;
         }
-
-        return view('user.dashboard', compact(
-            'totalOrders',
-            'deliveredOrders',
-            'regularOrderCount',
-            'customOrderCount',
-            'totalItemsCount',
-            'pendingOrdersCount',
-            'combinedRecentOrders',
-            'salesLabels',
-            'salesData',
-            'year'
-        ));
     }
+
+    return view('user.dashboard', compact(
+        'totalOrders',
+        'deliveredOrders',
+        'regularOrderCount',
+        'customOrderCount',
+        'totalItemsCount',
+        'pendingOrdersCount',
+        'combinedRecentOrders',
+        'salesLabels',
+        'salesData',
+        'year'
+    ));
+}
     public function profile()
     {
         return view('user.profile');
