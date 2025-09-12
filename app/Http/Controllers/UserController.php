@@ -17,34 +17,42 @@ use Carbon\Carbon;
 
 class UserController extends Controller
 {
-    public function index(Request $request)
-    {
-        $categories = Category::all();
+public function index(Request $request)
+{
+    $categories = Category::all();
 
-        $products = Product::with('category')
-            ->when($request->filled('category_id'), fn($q) => $q->where('category_id', $request->category_id))
-            ->when($request->filled('search'), fn($q) => $q->where('productName', 'like', '%' . $request->search . '%'))
+    $products = Product::with('category')
+        ->when($request->filled('category_id'), fn($q) => $q->where('category_id', $request->category_id))
+        ->when($request->filled('search'), fn($q) => $q->where('productName', 'like', '%' . $request->search . '%'))
+        ->latest()
+        ->paginate(12);
+
+    $user = Auth::user();
+    $admin = User::where('role', 'admin')->first();
+
+    $messages = collect();
+    $isAdminActive = false;
+
+    if ($user && $admin) {
+        $messages = Message::where(function ($q) use ($user, $admin) {
+                $q->where('sender_id', $user->id)
+                  ->where('receiver_id', $admin->id);
+            })
+            ->orWhere(function ($q) use ($user, $admin) {
+                $q->where('sender_id', $admin->id)
+                  ->where('receiver_id', $user->id);
+            })
             ->latest()
-            ->paginate(12);
+            ->limit(20)
+            ->get()
+            ->reverse();
 
-        $user = Auth::user();
-        $admin = User::where('role', 'admin')->first();
-
-        $messages = collect();
-        $isAdminActive = false;
-
-        if ($user && $admin) {
-            $messages = Message::where(function ($q) use ($user, $admin) {
-                $q->where('sender_id', $user->id)->where('receiver_id', $admin->id);
-            })->orWhere(function ($q) use ($user, $admin) {
-                $q->where('sender_id', $admin->id)->where('receiver_id', $user->id);
-            })->latest()->limit(20)->get()->reverse();
-
-            $isAdminActive = Cache::has("typing_admin_{$admin->id}");
-        }
-
-        return view('user.home', compact('products', 'categories', 'messages', 'admin', 'isAdminActive'));
+        $isAdminActive = Cache::has("typing_admin_{$admin->id}");
     }
+
+    return view('user.home', compact('products', 'categories', 'messages', 'admin', 'isAdminActive'));
+}
+
 
     public function viewProduct($id)
     {

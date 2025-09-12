@@ -1,6 +1,25 @@
 <x-profile-link>
     <div class="container mx-auto px-4 py-6 space-y-8" 
-        x-data="{ showConfirm: false, showSaved: {{ session('success') ? 'true' : 'false' }}, showSaving: false }"
+        x-data="{ 
+            showConfirm: false, 
+            showSaved: {{ session('success') ? 'true' : 'false' }}, 
+            showSaving: false, 
+            newPassword: '', 
+            confirmPassword: '',
+            passwordMatch: false,
+            passwordStrength: {
+                length: false,
+                mixed: false
+            }
+        }"
+        x-init="$watch('newPassword', value => {
+            passwordStrength.length = value.length >= 12;
+            passwordStrength.mixed = /[a-z]/.test(value) && /[A-Z]/.test(value) && /[0-9]/.test(value);
+            passwordMatch = (newPassword === confirmPassword);
+        });
+        $watch('confirmPassword', value => {
+            passwordMatch = (newPassword === value);
+        })"
     >
         <div class="flex items-center space-x-8 mb-8">
             @if(auth()->user()->school && auth()->user()->school->image)
@@ -62,7 +81,7 @@
                 <div class="border-t pt-6">
                     <h2 class="text-xl font-semibold text-gray-800 mb-4">Change Password</h2>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Current Password</label>
                             <input type="password" name="current_password"
@@ -72,13 +91,46 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700">New Password</label>
                             <input type="password" name="new_password"
-                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-200 focus:border-green-500 focus:outline-none">
+                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-200 focus:border-green-500 focus:outline-none"
+                                x-model="newPassword"
+                                :class="{
+                                    'border-red-500': newPassword.length > 0 && (!passwordStrength.length || !passwordStrength.mixed),
+                                    'border-green-500': passwordStrength.length && passwordStrength.mixed
+                                }">
+                            <div class="mt-2 text-sm text-gray-500">
+                                <p class="flex items-center space-x-2" :class="{ 'text-green-600': passwordStrength.length, 'text-red-600': !passwordStrength.length && newPassword.length > 0 }">
+                                    <svg x-show="passwordStrength.length" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <svg x-show="!passwordStrength.length && newPassword.length > 0" class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <span class="ml-2">At least 12 characters long</span>
+                                </p>
+                                <p class="flex items-center space-x-2" :class="{ 'text-green-600': passwordStrength.mixed, 'text-red-600': !passwordStrength.mixed && newPassword.length > 0 }">
+                                    <svg x-show="passwordStrength.mixed" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <svg x-show="!passwordStrength.mixed && newPassword.length > 0" class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <span class="ml-2">A mix of uppercase, lowercase, and numbers</span>
+                                </p>
+                            </div>
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Confirm New Password</label>
                             <input type="password" name="new_password_confirmation"
-                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-200 focus:border-green-500 focus:outline-none">
+                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-200 focus:border-green-500 focus:outline-none"
+                                x-model="confirmPassword"
+                                :class="{
+                                    'border-red-500': confirmPassword.length > 0 && !passwordMatch,
+                                    'border-green-500': passwordMatch
+                                }">
+                            <p x-show="confirmPassword.length > 0" :class="{ 'text-red-600': !passwordMatch, 'text-green-600': passwordMatch }" class="mt-2 text-sm font-semibold">
+                                <span x-text="passwordMatch ? 'Passwords match!' : 'Passwords do not match.'"></span>
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -94,6 +146,7 @@
 
         <div 
             x-show="showConfirm" 
+            x-cloak
             class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
             x-transition
         >
@@ -119,6 +172,7 @@
 
         <div 
             x-show="showSaving" 
+            x-cloak
             x-transition:enter="transition ease-out duration-300"
             x-transition:enter-start="opacity-0 scale-90"
             x-transition:enter-end="opacity-100 scale-100"
@@ -135,6 +189,7 @@
 
         <div 
             x-show="showSaved" 
+            x-cloak
             x-transition 
             x-init="setTimeout(() => showSaved = false, 2000)" 
             class="fixed top-6 right-6 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50"
@@ -145,6 +200,9 @@
 </x-profile-link>
 
 <style>
+    [x-cloak] {
+        display: none !important;
+    }
     @keyframes fadeIn {
         from { opacity: 0; transform: scale(0.95); }
         to { opacity: 1; transform: scale(1); }

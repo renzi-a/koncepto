@@ -130,7 +130,7 @@ class OrderController extends Controller
             ];
         });
     
-        $items = $this->paginateCollection($allItems->values());
+        $items = $allItems->values();
     
         return view('admin.orders-show', compact('order', 'items'));
     }
@@ -169,44 +169,23 @@ class OrderController extends Controller
         );
     }
 
-    public function adminCustomShow(Request $request, $id)
-    {
-        $order = CustomOrder::with('user.school', 'items')->findOrFail($id);
+public function adminCustomShow(Request $request, $id)
+{
+    $order = CustomOrder::with('user.school', 'items')->findOrFail($id);
     
-        // Change 'gathering' to 'processing'
-        if (strtolower($order->status) === 'processing') {
-            return redirect()->route('admin.custom-orders.gather', $order->id);
-        }
-    
-        $search = $request->input('search');
-        $items = collect($order->items ?? []);
-    
-        if ($search) {
-            $searchLower = strtolower($search);
-            $items = $items->filter(function ($item) use ($searchLower) {
-                return str_contains(strtolower($item['name']), $searchLower) ||
-                           str_contains(strtolower($item['brand'] ?? ''), $searchLower) ||
-                           str_contains(strtolower($item['description'] ?? ''), $searchLower);
-            });
-        }
-    
-        $perPage = 10;
-        $page = $request->input('page', 1);
-    
-        $paginatedItems = new LengthAwarePaginator(
-            $items->forPage($page, $perPage)->values(),
-            $items->count(),
-            $perPage,
-            $page,
-            ['path' => $request->url(), 'query' => $request->query()]
-        );
-    
-        return view('admin.custom-orders-show', [
-            'order' => $order,
-            'items' => $paginatedItems,
-            'search' => $search,
-        ]);
+    // Change 'gathering' to 'processing'
+    if (strtolower($order->status) === 'processing') {
+        return redirect()->route('admin.custom-orders.gather', $order->id);
     }
+
+    $items = collect($order->items ?? []);
+
+    return view('admin.custom-orders-show', [
+        'order' => $order,
+        'items' => $items,
+        'search' => null, // This is no longer needed but can be left as a placeholder
+    ]);
+}
     
     public function showQuotation($orderId, Request $request)
     {
@@ -242,7 +221,6 @@ class OrderController extends Controller
     {
         $order = CustomOrder::with('items')->findOrFail($id);
 
-        // Change 'approved' and 'gathering' to 'processing'
         if (strtolower($order->status) === 'approved') {
             $order->status = 'processing';
             $order->save();

@@ -10,37 +10,42 @@
             color: #333;
             margin: 0;
             padding: 40px;
-            line-height: 1.5;
+            line-height: 1.3;
         }
         .center { text-align: center; }
         .left { text-align: left; }
         .right { text-align: right; }
-        .logo {
-            width: 250px;
-            margin-bottom: 15px;
-        }
         .header {
-            border-bottom: 2px solid #2a4365;
+            border-bottom: 2px solid #064e3b; /* Darker green */
             padding-bottom: 15px;
             margin-bottom: 25px;
         }
-        .header h2 {
-            color: #2a4365;
-            margin: 8px 0;
+        .logo {
+            width: 120px;
+            height: auto;
+        }
+        .business-info {
+            text-align: center; /* keep text centered */
+        }
+        .business-info h2 {
+            color: #064e3b;
+            margin: 0;
             font-size: 18px;
+            font-weight: bold;
             letter-spacing: 1px;
         }
-        .header h3 {
-            color: #2a4365;
-            margin: 15px 0 5px;
+        .business-info p {
+            margin: 0;
+            padding: 0;
+            font-size: 12px;
+            color: #444;
+            line-height: 1.2;
+        }
+        h3 {
+            color: #064e3b;
+            margin: 10px 0 5px;
             font-size: 16px;
-        }
-        .header p {
-            margin: 4px 0;
-            color: #555;
-        }
-        .info-section p {
-            margin: 5px 0;
+            text-align: center;
         }
         table {
             width: 100%;
@@ -50,34 +55,28 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         th {
-            background-color: #2a4365;
+            background-color: #064e3b;
             color: white;
-            padding: 8px;
+            padding: 6px;
             text-align: center;
             font-weight: 500;
         }
         td {
             border: 1px solid #e2e8f0;
-            padding: 8px;
+            padding: 6px;
             text-align: center;
             vertical-align: middle;
         }
-        tr:nth-child(even) {
-            background-color: #f8fafc;
-        }
+        tr:nth-child(even) { background-color: #f8fafc; }
         .grand-total {
             font-weight: bold;
             background-color: #e2e8f0;
             color: #1a202c;
         }
-        .signature {
-            margin-top: 40px;
-        }
-        .signature p {
-            margin: 5px 0;
-        }
+        .signature { margin-top: 40px; }
+        .signature p { margin: 2px 0; }
         .mt-4 { margin-top: 20px; }
-        .text-blue { color: #2a4365; }
+        .text-green { color: #064e3b; }
         .text-bold { font-weight: bold; }
         .item-image {
             width: 50px;
@@ -87,25 +86,38 @@
             padding: 2px;
             background: white;
         }
+        .info-section p {
+            margin: 0;
+            padding: 0;
+            line-height: 1.2;
+        }
     </style>
 </head>
 <body>
 
-    <div class="center header">
-        <img src="{{ public_path('images/logo.png') }}" class="logo" alt="Koncepto Logo">
-        <h2>KONCEPTO SCHOOL SUPPLIES AND EQUIPMENT TRADING</h2>
-        <p>Brias St. Brgy. 9, Nasugbu, Batangas</p>
-        <p>Reena Ophelia C. Angeles – Proprietor</p>
-        <p>Non-VAT Reg. TIN: 763-218-708-000</p>
+    <div class="header">
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="width: 130px; text-align: center; vertical-align: middle;">
+                    <img src="{{ public_path('images/logo.png') }}" class="logo" alt="Koncepto Logo">
+                </td>
+                <td class="business-info" style="vertical-align: middle;">
+                    <h2>KONCEPTO SCHOOL SUPPLIES AND EQUIPMENT TRADING</h2>
+                    <p>Brias St. Brgy. 9, Nasugbu, Batangas</p>
+                    <p>Reena Ophelia C. Angeles – Proprietor</p>
+                    <p>Non-VAT Reg. TIN: 763-218-708-000</p>
+                </td>
+            </tr>
+        </table>
         <h3>PRICE QUOTATION</h3>
     </div>
 
     <div class="info-section left">
-        <p class="text-bold">Name: {{ $order->user->school->principal ?? 'N/A' }}</span></p>
-        <p class="text-bold">Position: Principal<span>
-        <p class="text-bold">Business Name: <span class="text-blue">{{ $order->user->school->school_name ?? 'N/A' }}</span></p>
+        <p class="text-bold">Name: {{ $order->user->school->principal ?? 'N/A' }}</p>
+        <p class="text-bold">Position: Principal</p>
+        <p class="text-bold">Business Name: <span class="text-green">{{ $order->user->school->school_name ?? 'N/A' }}</span></p>
         <p class="text-bold">Business Address: <span>{{ $order->user->school->address ?? 'N/A' }}</span></p>
-        <p style="margin-top: 15px;">
+        <p style="margin-top: 10px;">
             Please find below our price quotation for the following items as per your request with reference to PR No. dated:
         </p>
     </div>
@@ -131,7 +143,7 @@
                     $quantity = $item['quantity'] ?? 0;
                     $total = $price * $quantity;
                     $grandTotal += $total;
-                    $imagePath = isset($item['image']) ? public_path('uploads/' . $item['image']) : null;
+                    $imagePath = isset($item['photo']) ? public_path('storage/' . $item['photo']) : null;
                 @endphp
                 <tr>
                     <td>{{ $index + 1 }}</td>
@@ -140,9 +152,6 @@
                     <td>{{ $item['quantity'] }}</td>
                     <td>{{ $item['brand'] ?? '-' }}</td>
                     <td>
-                        @php
-                            $imagePath = public_path('storage/' . $item['photo']);
-                        @endphp
                         @if (!empty($item['photo']) && file_exists($imagePath))
                             <img src="{{ $imagePath }}" class="item-image" alt="Product Image">
                         @else
@@ -163,7 +172,7 @@
     <div class="mt-4 left">
         <p>For your queries concerning this quotation, please contact the undersigned through the telephone number or email address stated above.</p>
         <p class="text-bold">For Check Payments:</p>
-        <p>Please make check payable to: <span class="text-blue text-bold">KONCEPTO SCHOOL SUPPLIES AND EQUIPMENT TRADING</span></p>
+        <p>Please make check payable to: <span class="text-green text-bold">KONCEPTO SCHOOL SUPPLIES AND EQUIPMENT TRADING</span></p>
     </div>
 
     <div class="signature left">

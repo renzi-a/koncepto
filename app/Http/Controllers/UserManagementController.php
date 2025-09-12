@@ -39,32 +39,58 @@ class UserManagementController extends Controller
         return view('admin.schools.user.edit', compact('user'));
     }
 
-    public function update(Request $request, User $user)
-    {
-        $validated = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
-            'cp_no' => 'required|string|max:20',
-            'role' => 'required|in:school_admin,teacher,student',
-            'password' => 'nullable|string|min:8|confirmed',
-        ]);
+public function update(Request $request, $id)
+{
+    $school = School::findOrFail($id);
+    $admin  = $school->school_admin;
 
-        $user->first_name = $validated['first_name'];
-        $user->last_name = $validated['last_name'];
-        $user->email = $validated['email'];
-        $user->cp_no = $validated['cp_no'];
-        $user->role = $validated['role'];
+    $validatedSchool = $request->validate([
+        'school_name'   => 'required|string|max:255',
+        'address'       => 'required|string|max:255',
+        'school_email'  => 'required|email',
+        'principal'     => 'nullable|string|max:255',
+        'logo'          => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+    ]);
 
-        if (!empty($validated['password'])) {
-            $user->password = Hash::make($validated['password']);
-        }
+    $validatedAdmin = $request->validate([
+        'admin_first_name'            => 'required|string|max:255',
+        'admin_last_name'             => 'required|string|max:255',
+        'admin_email'                 => ['required','email',Rule::unique('users','email')->ignore($admin?->id)],
+        'admin_contact'               => 'required|string|max:20',
+        'admin_password'              => 'nullable|string|min:8|confirmed',
+    ]);
 
-        $user->save();
+    $school->update($validatedSchool);
 
-        return redirect()->route('admin.schools.show', $user->school_id)
-            ->with('success', 'User updated successfully.');
+    if ($request->hasFile('logo')) {
+        $path = $request->file('logo')->store('schools', 'public');
+        $school->image = $path;
+        $school->save();
     }
+
+    if ($admin) {
+        $admin->first_name = $validatedAdmin['admin_first_name'];
+        $admin->last_name  = $validatedAdmin['admin_last_name'];
+        $admin->email      = $validatedAdmin['admin_email'];
+        $admin->cp_no      = $validatedAdmin['admin_contact'];
+        if (!empty($validatedAdmin['admin_password'])) {
+            $admin->password = Hash::make($validatedAdmin['admin_password']);
+        }
+        $admin->save();
+    }
+
+if ($request->ajax()) {
+    return response()->json([
+        'message'  => 'School and admin updated successfully!',
+        'redirect' => route('admin.schools.index'), 
+    ]);
+}
+
+return redirect()->route('admin.schools.index') 
+    ->with('success', 'School and admin updated successfully!');
+
+}
+
 
     
 public function all(Request $request)

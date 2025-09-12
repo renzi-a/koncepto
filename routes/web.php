@@ -145,8 +145,9 @@ Route::middleware(['auth', IsUser::class])->group(function () {
     Route::get('/user/order/{id}', [UserOrderController::class, 'show'])->name('user.order.show');
     Route::get('/user/order-request', [UserOrderController::class, 'orderRequest'])->name('user.order-request');
     Route::get('/user/track-order', [UserOrderController::class, 'trackOrder'])->name('user.track-order');
+    Route::get('/track-orders/{type}/{id}/location', [UserOrderController::class, 'getOrderLocation']);
     Route::get('/user/normal-orders/{order}', [UserOrderController::class, 'show'])->name('user.normal-orders.show');
-    Route::post('/user/normal-orders/{order}/cancel', [UserOrderController::class, 'cancel'])->name('user.normal-orders.cancel');
+    Route::put('/user/normal-orders/{order}/cancel', [UserOrderController::class, 'cancel'])->name('user.normal-orders.cancel');
 
     // ORDER HISTORY
     Route::get('/user/order-history', [OrderHistoryController::class, 'index'])->name('user.order-history');

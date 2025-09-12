@@ -112,7 +112,7 @@
                                         ₱{{ number_format($item->price, 2) }}
                                     @else
                                         <span class="text-gray-400">Not yet set</span>
-                                    @endisset
+                                      @endisset
                                 </td>
                                 <td class="px-4 py-2">
                                     @isset($item->price)

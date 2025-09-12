@@ -1,13 +1,22 @@
 <x-profile-link>
     <div class="container mx-auto px-4 py-8"
-        x-data="{
+        x-data="() => ({
             showCancelModal: false,
             isLoading: false,
             cancelOrderId: null,
             cancelOrderType: '',
             reasonText: '',
-            activeTab: 'all'
-        }">
+            activeTab: 'all',
+            init() {
+                // Ensure modal never shows on page load
+                this.showCancelModal = false;
+                this.cancelOrderId = null;
+                this.cancelOrderType = '';
+                this.reasonText = '';
+            }
+        })"
+        x-init="init()"
+    >
         <div class="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
             <h1 class="text-3xl font-bold text-gray-800">My Orders</h1>
             <a href="{{ route('user.custom-order') }}"
@@ -30,6 +39,7 @@
             </select>
         </div>
 
+        {{-- Tabs --}}
         <div class="mb-6 border-b border-gray-200">
             <nav class="flex space-x-4 text-sm font-medium -mb-px">
                 <button @click="activeTab = 'all'"
@@ -65,6 +75,7 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {{-- Normal Orders --}}
             @forelse ($normalOrders as $order)
                 <div x-show="activeTab === 'all'
                     || (activeTab === 'new' && ['new'].includes('{{ $order->status }}'))
@@ -73,9 +84,7 @@
                     class="bg-white rounded-2xl shadow-xl p-4 transition-all duration-300 hover:shadow-2xl hover:scale-105 border-l-8 border-blue-400">
                     <div class="flex flex-col h-full">
                         <div class="flex-grow">
-                            <h2 class="text-lg font-bold text-gray-800 mb-1">
-                                Order #{{ $order->id }}
-                            </h2>
+                            <h2 class="text-lg font-bold text-gray-800 mb-1">Order #{{ $order->id }}</h2>
                             <div class="mt-2 flex items-center space-x-2 mb-2">
                                 <span class="inline-block text-xs px-2 py-0.5 rounded-full font-semibold bg-blue-200 text-blue-800">
                                     Normal
@@ -83,33 +92,19 @@
                                 @php
                                     $statusClass = '';
                                     switch(strtolower($order->status)) {
-                                        case 'new':
-                                            $statusClass = 'bg-red-200 text-red-800';
-                                            break;
-                                        case 'processing':
-                                            $statusClass = 'bg-blue-200 text-blue-800';
-                                            break;
-                                        case 'to be delivered':
-                                            $statusClass = 'bg-purple-200 text-purple-800';
-                                            break;
-                                        case 'delivered':
-                                            $statusClass = 'bg-green-200 text-green-800';
-                                            break;
-                                        default:
-                                            $statusClass = 'bg-gray-200 text-gray-800';
-                                            break;
+                                        case 'new': $statusClass = 'bg-red-200 text-red-800'; break;
+                                        case 'processing': $statusClass = 'bg-blue-200 text-blue-800'; break;
+                                        case 'to be delivered': $statusClass = 'bg-purple-200 text-purple-800'; break;
+                                        case 'delivered': $statusClass = 'bg-green-200 text-green-800'; break;
+                                        default: $statusClass = 'bg-gray-200 text-gray-800'; break;
                                     }
                                 @endphp
                                 <span class="inline-block text-xs px-2 py-0.5 rounded-full font-semibold {{ $statusClass }}">
                                     {{ ucfirst($order->status) }}
                                 </span>
                             </div>
-                            <p class="text-gray-600 text-sm mt-1">
-                                Items: {{ $order->items->count() ?? '-' }}
-                            </p>
-                            <p class="text-gray-500 text-xs mt-1">
-                                Created: {{ $order->created_at->format('M d, Y') }}
-                            </p>
+                            <p class="text-gray-600 text-sm mt-1">Items: {{ $order->items->count() ?? '-' }}</p>
+                            <p class="text-gray-500 text-xs mt-1">Created: {{ $order->created_at->format('M d, Y') }}</p>
                         </div>
 
                         <div class="mt-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 items-center justify-end">
@@ -119,7 +114,7 @@
                             </a>
                             @if (!in_array($order->status, ['To be delivered', 'delivered']))
                                 <button
-                                    @click="cancelOrderId = {{ $order->id }}; cancelOrderType = 'normal'; reasonText = ''; showCancelModal = true"
+                                    @click="cancelOrderId = '{{ $order->id }}'; cancelOrderType = 'normal'; reasonText = ''; showCancelModal = true"
                                     class="w-full sm:w-auto text-center py-1.5 px-4 text-red-600 font-semibold rounded-lg border border-red-600 hover:bg-red-600 hover:text-white transition">
                                     Cancel Order
                                 </button>
@@ -133,6 +128,7 @@
                 </div>
             @endforelse
 
+            {{-- Custom Orders --}}
             @forelse ($customOrders as $order)
                 <div x-show="activeTab === 'all'
                     || (activeTab === 'new' && ['to be quoted', 'quoted'].includes('{{ $order->status }}'))
@@ -141,9 +137,7 @@
                     class="bg-white rounded-2xl shadow-xl p-4 transition-all duration-300 hover:shadow-2xl hover:scale-105 border-l-8 border-yellow-400">
                     <div class="flex flex-col h-full">
                         <div class="flex-grow">
-                            <h2 class="text-lg font-bold text-gray-800 mb-1">
-                                Order #C{{ $order->id }}
-                            </h2>
+                            <h2 class="text-lg font-bold text-gray-800 mb-1">Order #C{{ $order->id }}</h2>
                             <div class="mt-2 flex items-center space-x-2 mb-2">
                                 <span class="inline-block text-xs px-2 py-0.5 rounded-full font-semibold bg-yellow-200 text-yellow-800">
                                     Custom
@@ -152,34 +146,20 @@
                                     $statusClass = '';
                                     switch(strtolower($order->status)) {
                                         case 'to be quoted':
-                                        case 'quoted':
-                                            $statusClass = 'bg-red-200 text-red-800';
-                                            break;
+                                        case 'quoted': $statusClass = 'bg-red-200 text-red-800'; break;
                                         case 'approved':
-                                        case 'processing':
-                                            $statusClass = 'bg-teal-200 text-teal-800';
-                                            break;
-                                        case 'to be delivered':
-                                            $statusClass = 'bg-purple-200 text-purple-800';
-                                            break;
-                                        case 'delivered':
-                                            $statusClass = 'bg-green-200 text-green-800';
-                                            break;
-                                        default:
-                                            $statusClass = 'bg-gray-200 text-gray-800';
-                                            break;
+                                        case 'processing': $statusClass = 'bg-teal-200 text-teal-800'; break;
+                                        case 'to be delivered': $statusClass = 'bg-purple-200 text-purple-800'; break;
+                                        case 'delivered': $statusClass = 'bg-green-200 text-green-800'; break;
+                                        default: $statusClass = 'bg-gray-200 text-gray-800'; break;
                                     }
                                 @endphp
                                 <span class="inline-block text-xs px-2 py-0.5 rounded-full font-semibold {{ $statusClass }}">
                                     {{ ucfirst($order->status) }}
                                 </span>
                             </div>
-                            <p class="text-gray-600 text-sm mt-1">
-                                Items: {{ $order->items_count }}
-                            </p>
-                            <p class="text-gray-500 text-xs mt-1">
-                                Created: {{ $order->created_at->format('M d, Y') }}
-                            </p>
+                            <p class="text-gray-600 text-sm mt-1">Items: {{ $order->items_count }}</p>
+                            <p class="text-gray-500 text-xs mt-1">Created: {{ $order->created_at->format('M d, Y') }}</p>
                         </div>
 
                         <div class="mt-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 items-center justify-end">
@@ -195,7 +175,7 @@
                             @endif
                             @if (in_array($order->status, ['to be quoted', 'quoted']))
                                 <button
-                                    @click="cancelOrderId = {{ $order->id }}; cancelOrderType = 'custom'; reasonText = ''; showCancelModal = true"
+                                    @click="cancelOrderId = '{{ $order->id }}'; cancelOrderType = 'custom'; reasonText = ''; showCancelModal = true"
                                     class="w-full sm:w-auto text-center py-1.5 px-4 text-red-600 font-semibold rounded-lg border border-red-600 hover:bg-red-600 hover:text-white transition">
                                     Cancel Order
                                 </button>
@@ -209,8 +189,10 @@
                 </div>
             @endforelse
 
+            {{-- Cancel Modal --}}
             <div
                 x-show="showCancelModal"
+                x-cloak
                 class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
                 x-transition:enter="ease-out duration-300"
                 x-transition:enter-start="opacity-0"
@@ -234,17 +216,10 @@
                         @method('PUT')
 
                         <div class="mb-4">
-                            <label for="reason" class="block text-sm font-medium text-gray-700 mb-1">
-                                Reason
-                            </label>
-                            <textarea
-                                id="reason"
-                                name="reason"
-                                x-model="reasonText"
-                                required
+                            <label for="reason" class="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+                            <textarea id="reason" name="reason" x-model="reasonText" required
                                 class="w-full border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
-                                rows="3"
-                            ></textarea>
+                                rows="3"></textarea>
                         </div>
 
                         <div class="flex justify-end space-x-2">
@@ -253,8 +228,7 @@
                             </button>
                             <button type="submit"
                                 class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 font-semibold transition-colors"
-                                x-bind:disabled="isLoading"
-                            >
+                                x-bind:disabled="isLoading">
                                 <span x-show="!isLoading">Yes, Cancel</span>
                                 <span x-show="isLoading" class="flex items-center space-x-1">
                                     <svg class="animate-spin w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24">

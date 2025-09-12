@@ -29,111 +29,136 @@
         header("Expires: Sat, 01 Jan 1990 00:00:00 GMT");
     }
 ?>
-
-    
 <body class="h-full bg-[#F0F4F9]">
-    <header class="flex items-center border-b border-gray-300 py-3 px-4 sm:px-10 bg-[#56AB2F] min-h-[65px] tracking-wide relative z-50">
-        <div class="flex items-center justify-between w-full max-w-screen-xl mx-auto gap-4">
-            <a href="{{ route('user.home') }}" class="flex-shrink-0">
-                <img src="{{ asset('images/logo.png')}}" alt="logo" class="w-[134px]" />
+    <header class="flex items-center border-b border-gray-300 py-3 px-4 sm:px-10 bg-[#56AB2F] min-h-[65px] tracking-wide relative z-50 sticky top-0">
+    <div class="flex items-center justify-between w-full max-w-screen-xl mx-auto gap-4">
+        <a href="{{ route('user.home') }}" class="flex-shrink-0">
+            <img src="{{ asset('images/logo.png')}}" alt="logo" class="w-[134px]" />
+        </a>
+
+        <div class="flex-grow max-w-2xl w-full mx-4">
+            <form method="GET" action="{{ route('user.home') }}" id="searchForm">
+                <div class="relative flex items-center bg-white px-4 py-2.5 border border-gray-300 rounded-full shadow-sm focus-within:border-green-500 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5 text-gray-400 mr-2">
+                        <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.089l5.485 5.486a1 1 0 01-1.414 1.414l-5.486-5.485A7 7 0 012 9z" clip-rule="evenodd" />
+                    </svg>
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Search products..." class="w-full text-sm outline-none bg-transparent" id="searchInput" autocomplete="off" />
+                    <button type="submit" hidden></button>
+                </div>
+            </form>
+        </div>
+
+        <div class="flex items-center gap-8">
+            @auth
+            <a href="{{ route('cart.index') }}" class="relative inline-block">
+                <img src="{{ asset('images/cart.png') }}" alt="Cart" class="w-7 h-7 hover:opacity-80 transition transform hover:scale-110 duration-200" />
+                @php
+                    $cartCount = \App\Models\CartItem::whereHas('cart', function ($q) {
+                        $q->where('user_id', auth()->id());
+                    })->sum('quantity');
+                @endphp
+                @if($cartCount > 0)
+                    <span id="cartBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center transition">
+                        {{ $cartCount }}
+                    </span>
+                @endif
             </a>
+            @endauth
 
-            <div class="flex-grow max-w-2xl w-full mx-4">
-                <form method="GET" action="{{ route('user.home') }}" id="searchForm">
-                    <div class="flex items-center bg-gray-100 px-4 py-2.5 border border-gray-200 focus-within:border-slate-900 transition-all rounded-xl">
-                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Search something..." class="w-full text-sm outline-none bg-transparent pr-2" id="searchInput" autocomplete="off" />
-                        <button type="submit" hidden></button>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192.904 192.904" width="16px" class="cursor-pointer fill-gray-400">
-                            <path d="m190.707 180.101-47.078-47.077c11.702-14.072 18.752-32.142 18.752-51.831C162.381 36.423 125.959 0 81.191 0 36.422 0 0 36.423 0 81.193c0 44.767 36.422 81.187 81.191 81.187 19.688 0 37.759-7.049 51.831-18.751l47.079 47.078a7.474 7.474 0 0 0 5.303 2.197 7.498 7.498 0 0 0 5.303-12.803zM15 81.193C15 44.694 44.693 15 81.191 15c36.497 0 66.189 29.694 66.189 66.193 0 36.496-29.692 66.187-66.189 66.187C44.693 147.38 15 117.689 15 81.193z"></path>
-                        </svg>
-                    </div>
-                </form>
-            </div>
-
-            <div class="flex items-center gap-14">
-                @auth
-                <a href="{{ route('cart.index') }}" class="relative inline-block">
-                    <img src="{{ asset('images/cart.png') }}" alt="Cart" class="w-7 h-7 hover:opacity-80 transition transform hover:scale-110 duration-200" />
-                    @php
-                        $cartCount = \App\Models\CartItem::whereHas('cart', function ($q) {
-                            $q->where('user_id', auth()->id());
-                        })->sum('quantity');
-                    @endphp
-                    @if($cartCount > 0)
-                        <span id="cartBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center transition">
-                            {{ $cartCount }}
+            @auth
+            @php
+                $notifications = \App\Models\Notification::where('user_id', auth()->id())
+                    ->latest()
+                    ->take(7)
+                    ->get();
+                
+                $unreadCount = $notifications->where('is_read', false)->count();
+            @endphp
+            <div class="relative">
+                <button id="notificationBtn" class="relative">
+                    <img src="{{ asset('images/bell.png') }}" alt="Notifications" class="w-7 h-7 hover:opacity-80 transition transform hover:scale-110 duration-200" />
+                    @if ($unreadCount > 0)
+                        <span id="notificationBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                            {{ $unreadCount }}
                         </span>
                     @endif
-                </a>
-                @endauth
+                </button>
 
-                @unless (request()->routeIs('user.chat.full'))
-                @php
-                    $notifications = \App\Models\Notification::where('user_id', auth()->id())
-                        ->latest()
-                        ->take(7)
-                        ->get();
-
-                    $unreadCount = $notifications->where('is_read', false)->count();
-                @endphp
-
-                <div class="relative">
-                    <button id="notificationBtn" class="relative">
-                        <img src="{{ asset('images/bell.png') }}" alt="Notifications" class="w-7 h-7 hover:opacity-80 transition transform hover:scale-110 duration-200" />
-                        @if ($unreadCount > 0)
-                            <span id="notificationBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                                {{ $unreadCount }}
-                            </span>
-                        @endif
-                    </button>
-
-                    <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                        <div class="p-3 font-semibold border-b text-gray-700">Notifications</div>
-                        <ul class="max-h-60 overflow-y-auto" id="notificationList">
-                            @foreach($notifications as $notification)
-                                <li class="px-4 py-2 text-sm border-b hover:bg-gray-100 transition {{ $notification->is_read ? 'text-gray-400' : 'text-gray-800 font-medium' }}">
-                                    @php
-                                        $notificationRoute = match($notification->type) {
-                                            'order_status_update' => route('user.orders'),
-                                            'custom_order_status_update' => route('user.custom-orders'),
-                                            'new_message' => route('user.chat.full'),
-                                            default => '#',
-                                        };
-                                    @endphp
-                                    <a href="{{ $notificationRoute }}" class="block hover:underline">
-                                        {{ $notification->message }}
-                                        <div class="text-xs text-gray-400">{{ $notification->created_at->diffForHumans() }}</div>
-                                    </a>
-                                </li>
-                            @endforeach
-                        </ul>
-                        <a href="/notifications" class="block text-center text-blue-500 hover:underline text-sm py-2">View All</a>
-                    </div>
+                <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                    <div class="p-3 font-semibold border-b text-gray-700">Notifications</div>
+                    <ul class="max-h-60 overflow-y-auto" id="notificationList">
+                        @foreach($notifications as $notification)
+                            <li class="px-4 py-2 text-sm border-b hover:bg-gray-100 transition {{ $notification->is_read ? 'text-gray-400' : 'text-gray-800 font-medium' }}">
+                                @php
+                                    $notificationRoute = match($notification->type) {
+                                        'order_status_update' => route('user.orders'),
+                                        'custom_order_status_update' => route('user.custom-orders'),
+                                        'new_message' => route('user.chat.full'),
+                                        default => '#',
+                                    };
+                                @endphp
+                                <a href="{{ $notificationRoute }}" class="block hover:underline">
+                                    {{ $notification->message }}
+                                    <div class="text-xs text-gray-400">{{ $notification->created_at->diffForHumans() }}</div>
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                    <a href="/notifications" class="block text-center text-blue-500 hover:underline text-sm py-2">View All</a>
                 </div>
-                @endunless
-
-                <a href="{{ route('user.dashboard') }}">
-                    <img src="{{ asset('images/user.png') }}" alt="Profile" class="w-7 h-7 hover:opacity-80 transition" />
-                </a>
             </div>
+            @endauth
+
+            <a href="{{ route('user.dashboard') }}">
+                <img src="{{ asset('images/user.png') }}" alt="Profile" class="w-7 h-7 hover:opacity-80 transition transform hover:scale-110 duration-200" />
+            </a>
         </div>
-    </header>
+    </div>
+</header>
 
     {{ $slot }}
     <x-chat-preview />
 </body>
-
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     const input = document.getElementById('searchInput');
     let timeout = null;
+
+    function fetchProducts(url) {
+        $.ajax({
+            url: url,
+            type: 'GET',
+            dataType: 'html',
+            success: function(data) {
+                let newProducts = $(data).find('#products-container').html();
+                $('#products-container').html(newProducts);
+                window.history.pushState(null, null, url);
+            },
+            error: function(xhr, status, error) {
+                console.error("Error fetching products:", error);
+            }
+        });
+    }
+
     if (input) {
         input.addEventListener('input', function () {
             clearTimeout(timeout);
             timeout = setTimeout(() => {
-                document.getElementById('searchForm').submit();
-            }, 500);
+                const searchValue = this.value;
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.set('search', searchValue);
+                currentUrl.searchParams.delete('page');
+                fetchProducts(currentUrl.href);
+            }, 500); 
         });
     }
+
+
+    $(document).on('click', '#products-container .pagination a', function(e) {
+        e.preventDefault();
+        const url = $(this).attr('href');
+        fetchProducts(url);
+    });
 
     const bell = document.getElementById('notificationBtn');
     const dropdown = document.getElementById('notificationDropdown');
@@ -153,7 +178,6 @@
                     }
                 }).then(() => {
                     if (badge) badge.remove();
-                    // Update the list item styles after marking as read
                     document.querySelectorAll('#notificationList li').forEach(item => {
                         item.classList.remove('font-medium', 'text-gray-800');
                         item.classList.add('text-gray-400');
@@ -174,7 +198,6 @@
             .then(response => response.json())
             .then(data => {
                 if (data.hasNew) {
-                    // Fetch the full notification list if there are new notifications
                     fetch('/notifications')
                         .then(response => response.text())
                         .then(html => {
@@ -197,13 +220,6 @@
                             if (newList) {
                                 const currentList = document.getElementById('notificationList');
                                 currentList.innerHTML = newList.innerHTML;
-                            }
-
-                            // Show a temporary notification if the dropdown is not open
-                            if (dropdown.classList.contains('hidden')) {
-                                // You can implement a toast or a small pop-up here
-                                // Example: a simple alert
-                                // alert('You have new notifications!');
                             }
                         });
                 }
