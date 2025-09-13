@@ -165,11 +165,8 @@ Route::middleware(['auth', IsUser::class])->group(function () {
     Route::get('/orders/quoted', [CustomOrderController::class, 'quotedOrders'])->name('user.order.quoted');
     Route::get('/orders/quoted/{id}', [CustomOrderController::class, 'showQuotedOrder'])->name('user.order.quoted.show');
     Route::get('/orders/quoted/{id}/pdf', [CustomOrderController::class, 'downloadQuotedOrderPdf'])->name('user.order.quoted.pdf');
-    Route::put('/user/custom-orders/{id}/approve', [CustomOrderController::class, 'approve'])
-        ->name('user.custom-orders.approve');
-    Route::get('/user/custom-orders/{customOrder}/gather', [CustomOrderController::class, 'gatherView'])
-        ->name('user.custom-orders.gather');
-    Route::get('/user/custom-orders/{id}/gather-pdf', [CustomOrderController::class, 'gatherPdf'])
-        ->name('user.order.gather-pdf');
+    Route::put('/user/custom-orders/{id}/approve', [CustomOrderController::class, 'approve'])->name('user.custom-orders.approve');
+    Route::get('/user/custom-orders/{customOrder}/gather', [CustomOrderController::class, 'gatherView'])->name('user.custom-orders.gather');
+    Route::get('/user/custom-orders/{id}/gather-pdf', [CustomOrderController::class, 'gatherPdf'])->name('user.order.gather-pdf');
 
 });

@@ -10,8 +10,6 @@ use App\Models\School;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-
-
 use Illuminate\Support\Facades\DB;
 use App\Models\Payment;
 

@@ -74,8 +74,8 @@
 <body x-data="{ showLogoutModal: false }" class="font-poppins antialiased bg-[#F0F4F9] h-screen overflow-hidden">
   @php use Illuminate\Support\Facades\Auth; @endphp
   <div id="view" class="flex h-screen w-screen overflow-hidden">
-    <aside class="w-[23rem] fixed transition transform ease-in-out duration-300 z-50 flex h-screen bg-[#56AB2F]">
-     <div class="text-white mt-16 flex-col space-y-2 w-full h-[calc(100vh)] px-4" x-data="{ open: {{ request()->routeIs('product.*') || request()->is('admin/ads*') ? 'true' : 'false' }} }">
+    <aside class="w-[23rem] fixed transition transform ease-in-out duration-300 z-50 flex h-screen bg-[#56AB2F] overflow-y-auto">
+      <div class="text-white mt-16 flex-col space-y-2 w-full px-4" x-data="{ open: {{ request()->routeIs('product.*') || request()->is('admin/ads*') ? 'true' : 'false' }} }">
         <div id="profile" class="text-center space-y-2 mb-4">
           <div class="pb-3">
             <img src="{{ asset('images/logo.png') }}" alt="User Avatar" class="w-[120px] md:w-[140px] lg:w-[180px] mx-auto rounded-full"/>
@@ -86,72 +86,53 @@
           @endauth
         </div>
         <div id="menu" class="flex flex-col space-y-0.5 text-white mt-4 px-2">
-
-
-          
-  <x-side-link class="sidebar-link no-ajax" href="{{ route('admin.dashboard') }}" :active="request()->routeIs('admin.dashboard')">
-    <img src="{{ asset('images/dashboard.png') }}" alt="Dashboard Icon" class="w-6 h-6 inline-block mr-3 ms-20">
-    Dashboard
-  </x-side-link>
-
-  <p class="text-white/70 font-semibold uppercase text-sm mt-4">Product Management</p>
-
-  <x-side-link class="sidebar-link no-ajax" href="{{ route('product.index') }}" :active="request()->routeIs('product.*')">
-    <img src="{{ asset('images/product.png') }}" alt="Product Icon" class="w-6 h-6 inline-block mr-3 ms-20">
-    Products
-  </x-side-link>
-
-
-
-  <p class="text-white/70 font-semibold uppercase text-sm mt-4">User Management</p>
-
-  <x-side-link class="sidebar-link"  href="{{ route('admin.schools.index') }}" :active="request()->routeIs('admin.schools.*')">
-    <img src="{{ asset('images/school.png') }}" alt="School Icon" class="w-6 h-6 inline-block mr-3 ms-20">
-    Schools
-  </x-side-link>
-
-<x-side-link class="sidebar-link no-ajax" href="{{ route('admin.users.index') }}" :active="request()->routeIs('admin.users.index')">
-    <img src="{{ asset('images/user.png') }}" alt="User Icon" class="w-6 h-6 inline-block mr-3 ms-20">
-    Users
-</x-side-link>
-
-  <p class="text-white/70 font-semibold uppercase text-sm mt-4">Ecommerce</p>
-
-  <x-side-link class="sidebar-link" href="{{ route('admin.orders') }}" :active="request()->is('orders')">
-    <img src="{{ asset('images/order.png') }}" alt="Order Icon" class="w-6 h-6 inline-block mr-3 ms-20">
-    Orders
-  </x-side-link>
-
-  <x-side-link class="sidebar-link"  href="{{ route('admin.payment') }}" :active="request()->is('payments')">
-    <img src="{{ asset('images/payment.png') }}" alt="Payment Icon" class="w-6 h-6 inline-block mr-3 ms-20">
-    Payments
-  </x-side-link>
-
-  <p class="text-white/70 font-semibold uppercase text-sm mt-4">Apps</p>
-
-    <x-side-link class="sidebar-link" href="{{ route('admin.ads') }}" :active="request()->is('admin/ads*')">
-    <img src="{{ asset('images/ads.png') }}" alt="Ads Icon" class="w-6 h-6 inline-block mr-3 ms-20">
-    Ads
-  </x-side-link>
-
-  <x-side-link class="sidebar-link"  href="{{ route('admin.chat.index') }}" :active="request()->is('admin/chat*')">
-    <img src="{{ asset('images/chat.png') }}" alt="Chat Icon" class="w-6 h-6 inline-block mr-3 ms-20">
-    Message
-  </x-side-link>
-
-  <x-side-link class="sidebar-link" href="#" @click.prevent="showLogoutModal = true">
-    <img src="{{ asset('images/logout.png') }}" alt="Log Out Icon" class="w-6 h-6 inline-block mr-3 ms-20">
-    Logout
-  </x-side-link>
-
-</div>
-
+          <x-side-link class="sidebar-link no-ajax" href="{{ route('admin.dashboard') }}" :active="request()->routeIs('admin.dashboard')">
+            <img src="{{ asset('images/dashboard.png') }}" alt="Dashboard Icon" class="w-6 h-6 inline-block mr-3 ms-20">
+            Dashboard
+          </x-side-link>
+          <p class="text-white/70 font-semibold uppercase text-sm mt-4">Product Management</p>
+          <x-side-link class="sidebar-link no-ajax" href="{{ route('product.index') }}" :active="request()->routeIs('product.*')">
+            <img src="{{ asset('images/product.png') }}" alt="Product Icon" class="w-6 h-6 inline-block mr-3 ms-20">
+            Products
+          </x-side-link>
+          <p class="text-white/70 font-semibold uppercase text-sm mt-4">User Management</p>
+          <x-side-link class="sidebar-link" href="{{ route('admin.schools.index') }}" :active="request()->routeIs('admin.schools.*')">
+            <img src="{{ asset('images/school.png') }}" alt="School Icon" class="w-6 h-6 inline-block mr-3 ms-20">
+            Schools
+          </x-side-link>
+          <x-side-link class="sidebar-link no-ajax" href="{{ route('admin.users.index') }}" :active="request()->routeIs('admin.users.index')">
+            <img src="{{ asset('images/user.png') }}" alt="User Icon" class="w-6 h-6 inline-block mr-3 ms-20">
+            Users
+          </x-side-link>
+          <p class="text-white/70 font-semibold uppercase text-sm mt-4">Ecommerce</p>
+          <x-side-link class="sidebar-link" href="{{ route('admin.orders') }}" :active="request()->is('orders')">
+            <img src="{{ asset('images/order.png') }}" alt="Order Icon" class="w-6 h-6 inline-block mr-3 ms-20">
+            Orders
+          </x-side-link>
+          <x-side-link class="sidebar-link" href="{{ route('admin.payment') }}" :active="request()->is('payments')">
+            <img src="{{ asset('images/payment.png') }}" alt="Payment Icon" class="w-6 h-6 inline-block mr-3 ms-20">
+            Payments
+          </x-side-link>
+          <p class="text-white/70 font-semibold uppercase text-sm mt-4">Apps</p>
+          <x-side-link class="sidebar-link" href="{{ route('admin.ads') }}" :active="request()->is('admin/ads*')">
+            <img src="{{ asset('images/ads.png') }}" alt="Ads Icon" class="w-6 h-6 inline-block mr-3 ms-20">
+            Ads
+          </x-side-link>
+          <x-side-link class="sidebar-link" href="{{ route('admin.chat.index') }}" :active="request()->is('admin/chat*')">
+            <img src="{{ asset('images/chat.png') }}" alt="Chat Icon" class="w-6 h-6 inline-block mr-3 ms-20">
+            Message
+          </x-side-link>
+          <x-side-link class="sidebar-link" href="#" @click.prevent="showLogoutModal = true">
+            <img src="{{ asset('images/logout.png') }}" alt="Log Out Icon" class="w-6 h-6 inline-block mr-3 ms-20">
+            Logout
+          </x-side-link>
+        </div>
       </div>
       <div class="mini hidden mt-20 flex flex-col space-y-2 w-full h-[calc(100vh)]"></div>
     </aside>
-      <main id="main-content" class="flex-1 ml-[23rem] h-screen overflow-y-auto bg-[#F0F4F9] p-6">
-          {{ $slot }}
-      </main>
+    <main id="main-content" class="flex-1 ml-[23rem] h-screen overflow-y-auto bg-[#F0F4F9] p-6">
+      {{ $slot }}
+    </main>
   </div>
   <div x-show="showLogoutModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 overflow-y-auto">
     <div class="absolute inset-0" @click="showLogoutModal = false"></div>
@@ -172,16 +153,13 @@
             Sign out
           </button>
         </form>
-
         <button @click="showLogoutModal = false" type="button"
           class="py-2.5 px-4 inline-flex justify-center items-center gap-2 rounded-md border border-transparent font-semibold bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all text-sm">
           Cancel
         </button>
-
       </div>
     </div>
   </div>
-
   <div id="loadingOverlay" class="hidden fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
     <div class="bg-white rounded-xl p-8 shadow-lg flex items-center space-x-5 animate-fadeIn">
       <svg class="animate-spin animate-bounceScale text-[#56AB2F]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -191,58 +169,47 @@
       <span class="text-[#56AB2F] font-semibold">Logging out...</span>
     </div>
   </div>
-
   <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const mainContent = document.getElementById('main-content');
-
-  document.addEventListener('click', async (e) => {
-    const link = e.target.closest('.sidebar-link');
-
-    if (!link || link.classList.contains('no-ajax')) return;
-
-    const href = link.getAttribute('href');
-    const target = link.getAttribute('target');
-
-    if (href && href !== '#' && !e.ctrlKey && !e.metaKey && !target) {
-      e.preventDefault();
-
-      try {
-        const response = await fetch(href, {
-          headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
-
-        if (response.ok) {
-          const html = await response.text();
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          const newMain = doc.querySelector('#main-content');
-
-          if (newMain) {
-            mainContent.innerHTML = newMain.innerHTML;
-            history.pushState({}, '', href);
-
-            // Re-init map or scripts if needed
-            if (typeof initMap === 'function') initMap();
-            if (typeof window.dispatchEvent === 'function') {
-              window.dispatchEvent(new Event('DOMContentLoaded'));
-            }
-
-            document.querySelectorAll('.sidebar-link').forEach(l => {
-              l.classList.remove('bg-[#3E8E24]');
-              l.classList.add('bg-[#56AB2F]');
+    document.addEventListener('DOMContentLoaded', () => {
+      const mainContent = document.getElementById('main-content');
+      document.addEventListener('click', async (e) => {
+        const link = e.target.closest('.sidebar-link');
+        if (!link || link.classList.contains('no-ajax')) return;
+        const href = link.getAttribute('href');
+        const target = link.getAttribute('target');
+        if (href && href !== '#' && !e.ctrlKey && !e.metaKey && !target) {
+          e.preventDefault();
+          try {
+            const response = await fetch(href, {
+              headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
-
-            link.classList.remove('bg-[#56AB2F]');
-            link.classList.add('bg-[#3E8E24]');
+            if (response.ok) {
+              const html = await response.text();
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(html, 'text/html');
+              const newMain = doc.querySelector('#main-content');
+              if (newMain) {
+                mainContent.innerHTML = newMain.innerHTML;
+                history.pushState({}, '', href);
+                if (typeof initMap === 'function') initMap();
+                if (typeof window.dispatchEvent === 'function') {
+                  window.dispatchEvent(new Event('DOMContentLoaded'));
+                }
+                document.querySelectorAll('.sidebar-link').forEach(l => {
+                  l.classList.remove('bg-[#3E8E24]');
+                  l.classList.add('bg-[#56AB2F]');
+                });
+                link.classList.remove('bg-[#56AB2F]');
+                link.classList.add('bg-[#3E8E24]');
+              }
+            } else {
+              console.error(`Failed to load ${href}:`, response.statusText);
+            }
+          } catch (err) {
+            console.error('AJAX navigation error:', err);
           }
-        } else {
-          console.error(`Failed to load ${href}:`, response.statusText);
         }
-      } catch (err) {
-        console.error('AJAX navigation error:', err);
-      }
-    }
-  });
-});
-</script>
+      });
+    });
+  </script>
+</body>
