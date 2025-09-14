@@ -4,116 +4,75 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET"); 
 header("Access-Control-Allow-Headers: Content-Type"); 
 
+// Include the config file to get the $pdo object
 require __DIR__ . '/config.php';
 
-$year = isset($_GET['year']) ? (int)$_GET['year'] : date('Y');
+// Enable error logging for debugging
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/php_error.log');
 
-$startDate = date('Y-m-d H:i:s', mktime(0, 0, 0, 1, 1, $year));
-$endDate = date('Y-m-d H:i:s', mktime(23, 59, 59, 12, 31, $year));
+try {
+    $year = isset($_GET['year']) ? (int)$_GET['year'] : date('Y');
 
-$pendingOrders = 0;
-$completedOrders = 0;
-$orderRevenue = 0.0;
-$customPending = 0;
-$customCompleted = 0;
-$customRevenue = 0.0;
-$totalRevenue = 0.0;
+    // Validate the year to prevent unexpected behavior
+    if ($year < 1900 || $year > 2100) {
+        http_response_code(400);
+        echo json_encode(["error" => "Invalid year parameter."]);
+        exit();
+    }
+    
+    $startDate = date('Y-01-01 00:00:00', strtotime("{$year}-01-01"));
+    $endDate = date('Y-12-31 23:59:59', strtotime("{$year}-12-31"));
 
-$stmt = $conn->prepare("SELECT COUNT(*) AS count FROM orders WHERE status = 'new' AND created_at BETWEEN ? AND ?");
-if ($stmt) {
-    $stmt->bind_param("ss", $startDate, $endDate);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $row = $result->fetch_assoc();
-    $pendingOrders = $row['count'];
-    $stmt->close();
-} else {
-    error_log("Failed to prepare pendingOrders statement: " . $conn->error);
+    // Combine all order-related data into a single query
+    $stmt = $pdo->prepare("
+        SELECT
+            SUM(CASE WHEN o.status = 'new' THEN 1 ELSE 0 END) AS pendingOrders,
+            SUM(CASE WHEN o.status = 'delivered' THEN 1 ELSE 0 END) AS completedOrders,
+            SUM(CASE WHEN o.status = 'delivered' THEN (od.price * od.quantity) ELSE 0 END) AS orderRevenue
+        FROM
+            orders o
+        LEFT JOIN
+            order_details od ON o.id = od.order_id
+        WHERE
+            o.created_at BETWEEN ? AND ?
+    ");
+    $stmt->execute([$startDate, $endDate]);
+    $orderData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Combine all custom order-related data into a single query
+    $stmt = $pdo->prepare("
+        SELECT
+            SUM(CASE WHEN co.status IN ('to_be_quoted', 'quoted', 'approved', 'gathering') THEN 1 ELSE 0 END) AS customPending,
+            SUM(CASE WHEN co.status = 'delivered' THEN 1 ELSE 0 END) AS customCompleted,
+            SUM(CASE WHEN co.status = 'delivered' THEN coi.total_price ELSE 0 END) AS customRevenue
+        FROM
+            custom_orders co
+        LEFT JOIN
+            custom_order_items coi ON co.id = coi.custom_order_id
+        WHERE
+            co.created_at BETWEEN ? AND ?
+    ");
+    $stmt->execute([$startDate, $endDate]);
+    $customData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Calculate total revenue
+    $totalRevenue = (float)($orderData['orderRevenue'] ?? 0.0) + (float)($customData['customRevenue'] ?? 0.0);
+
+    echo json_encode([
+        'pendingOrders' => (int)($orderData['pendingOrders'] ?? 0),
+        'completedOrders' => (int)($orderData['completedOrders'] ?? 0),
+        'customPending' => (int)($customData['customPending'] ?? 0),
+        'customCompleted' => (int)($customData['customCompleted'] ?? 0),
+        'totalRevenue' => $totalRevenue
+    ]);
+
+} catch (PDOException $e) {
+    http_response_code(500);
+    $error_message = "Database error: " . $e->getMessage();
+    error_log($error_message);
+    echo json_encode(["success" => false, "message" => $error_message]);
 }
-
-$stmt = $conn->prepare("SELECT COUNT(*) AS count FROM orders WHERE status = 'delivered' AND created_at BETWEEN ? AND ?");
-if ($stmt) {
-    $stmt->bind_param("ss", $startDate, $endDate);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $row = $result->fetch_assoc();
-    $completedOrders = $row['count'];
-    $stmt->close();
-} else {
-    error_log("Failed to prepare completedOrders statement: " . $conn->error);
-}
-
-
-$stmt = $conn->prepare("
-    SELECT SUM(od.price * od.quantity) AS revenue
-    FROM order_details od
-    JOIN orders o ON od.order_id = o.id
-    WHERE o.status = 'delivered'
-    AND o.created_at BETWEEN ? AND ?
-");
-if ($stmt) {
-    $stmt->bind_param("ss", $startDate, $endDate);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $row = $result->fetch_assoc();
-    $orderRevenue = (float)($row['revenue'] ?? 0.0); 
-    $stmt->close();
-} else {
-    error_log("Failed to prepare orderRevenue statement: " . $conn->error);
-}
-
-$stmt = $conn->prepare("SELECT COUNT(*) AS count FROM custom_orders WHERE status IN ('to_be_quoted', 'quoted', 'approved', 'gathering') AND created_at BETWEEN ? AND ?");
-if ($stmt) {
-    $stmt->bind_param("ss", $startDate, $endDate);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $row = $result->fetch_assoc();
-    $customPending = $row['count'];
-    $stmt->close();
-} else {
-    error_log("Failed to prepare customPending statement: " . $conn->error);
-}
-
-$stmt = $conn->prepare("SELECT COUNT(*) AS count FROM custom_orders WHERE status = 'delivered' AND created_at BETWEEN ? AND ?");
-if ($stmt) {
-    $stmt->bind_param("ss", $startDate, $endDate);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $row = $result->fetch_assoc();
-    $customCompleted = $row['count'];
-    $stmt->close();
-} else {
-    error_log("Failed to prepare customCompleted statement: " . $conn->error);
-}
-
-
-$stmt = $conn->prepare("
-    SELECT SUM(coi.total_price) AS revenue
-    FROM custom_order_items coi
-    JOIN custom_orders co ON coi.custom_order_id = co.id
-    WHERE co.status = 'delivered'
-    AND co.created_at BETWEEN ? AND ?
-");
-if ($stmt) {
-    $stmt->bind_param("ss", $startDate, $endDate);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $row = $result->fetch_assoc();
-    $customRevenue = (float)($row['revenue'] ?? 0.0); 
-    $stmt->close();
-} else {
-    error_log("Failed to prepare customRevenue statement: " . $conn->error);
-}
-$totalRevenue = $orderRevenue + $customRevenue;
-
-$conn->close();
-
-echo json_encode([
-    'pendingOrders' => $pendingOrders,
-    'completedOrders' => $completedOrders,
-    'customPending' => $customPending,
-    'customCompleted' => $customCompleted,
-    'totalRevenue' => $totalRevenue
-]);
-
-?>

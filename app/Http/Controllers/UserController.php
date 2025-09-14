@@ -264,6 +264,19 @@ public function dashboard(Request $request)
         return back()->with('success', 'Profile updated successfully.');
     }
 
+public function checkNewNotifications()
+{
+    if (!Auth::check()) {
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
+
+    $unreadCount = Notification::where('user_id', Auth::id())
+                               ->where('is_read', false)
+                               ->count();
+
+    return response()->json(['hasNew' => $unreadCount > 0, 'count' => $unreadCount]);
+}
+
     public function showCustomOrder(CustomOrder $order)
     {
         $this->authorize('view', $order); 

@@ -12,7 +12,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require __DIR__ . '/config.php';
 
-
 $action = $_GET['action'] ?? null;
 $orderId = $_GET['orderId'] ?? null;
 $orderType = $_GET['orderType'] ?? null;
@@ -53,9 +52,6 @@ if ($orderId !== null && $action === null) {
                     'latitude' => (float)$order['school_latitude'],
                     'longitude' => (float)$order['school_longitude']
                 ];
-            } elseif (isset($order['delivery_location'])) {
-                $decodedLocation = json_decode($order['delivery_location'], true);
-                $order['delivery_location'] = (json_last_error() === JSON_ERROR_NONE) ? $decodedLocation : null;
             } else {
                 $order['delivery_location'] = null;
             }
@@ -96,9 +92,6 @@ if ($orderId !== null && $action === null) {
                     'latitude' => (float)$order['school_latitude'],
                     'longitude' => (float)$order['school_longitude']
                 ];
-            } elseif (isset($order['delivery_location'])) {
-                $decodedLocation = json_decode($order['delivery_location'], true);
-                $order['delivery_location'] = (json_last_error() === JSON_ERROR_NONE) ? $decodedLocation : null;
             } else {
                 $order['delivery_location'] = null;
             }
@@ -136,8 +129,21 @@ if ($action === 'update-location' && $orderId !== null && $_SERVER['REQUEST_METH
     $tableName = ($orderType === 'custom') ? 'custom_orders' : 'orders';
 
     try {
+        // Save driver’s new location in DB
         $stmt = $pdo->prepare("UPDATE {$tableName} SET driver_latitude = ?, driver_longitude = ? WHERE id = ?");
         $stmt->execute([$latitude, $longitude, $orderId]);
+
+        // 🔥 Trigger Laravel event broadcast (async, non-blocking)
+        $artisan = __DIR__ . '/../../artisan'; // adjust path if needed
+        $command = sprintf(
+            'php %s broadcast:order-location %s %s %s %s',
+            escapeshellarg($artisan),
+            escapeshellarg($orderId),
+            escapeshellarg($orderType),
+            escapeshellarg($latitude),
+            escapeshellarg($longitude)
+        );
+        exec($command . " > /dev/null 2>&1 &");
 
         http_response_code(200);
         echo json_encode([
@@ -191,4 +197,3 @@ if ($action === 'update-status' && $orderId !== null && $_SERVER['REQUEST_METHOD
 
 http_response_code(400);
 echo json_encode(['message' => 'Invalid request. Specify orderId and orderType, or action, orderId, and orderType for update.']);
-?>

@@ -122,6 +122,8 @@ Route::middleware(['auth', IsUser::class])->group(function () {
     Route::get('/notifications', [UserController::class, 'showNotifications'])->name('notifications');
     Route::post('/notifications/clear', [UserController::class, 'clearNotifications'])->name('notifications.clear');
     Route::post('/notifications/mark-read', [UserController::class, 'markAsRead'])->name('notifications.markRead');
+    Route::get('/notifications/check-new', [UserController::class, 'checkNewNotifications'])->name('notifications.checkNew');
+
 
     // Cart & Checkout
     Route::get('/user/cart', [CartController::class, 'index'])->name('cart.index');
