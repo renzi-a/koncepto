@@ -1,7 +1,9 @@
 <x-profile-link>
     <div class="container mx-auto px-4 py-6 space-y-6">
         <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
-            <h1 class="text-3xl font-bold text-gray-800 mb-4 md:mb-0">Order #{{ $order->id }} - Item Details</h1>
+            <h1 class="text-3xl font-bold text-gray-800 mb-4 md:mb-0">
+                Order #{{ $order->order_code ?? $order->id }} - Item Details
+            </h1>
             <a href="{{ route('user.order.index') }}" 
                class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
                 ← Back to Orders

@@ -137,7 +137,9 @@
                     class="bg-white rounded-2xl shadow-xl p-4 transition-all duration-300 hover:shadow-2xl hover:scale-105 border-l-8 border-yellow-400">
                     <div class="flex flex-col h-full">
                         <div class="flex-grow">
-                            <h2 class="text-lg font-bold text-gray-800 mb-1">Order #C{{ $order->id }}</h2>
+                            <h2 class="text-lg font-bold text-gray-800 mb-1">
+                                Order #{{ $order->order_code ?? $order->id }}
+                            </h2>
                             <div class="mt-2 flex items-center space-x-2 mb-2">
                                 <span class="inline-block text-xs px-2 py-0.5 rounded-full font-semibold bg-yellow-200 text-yellow-800">
                                     Custom

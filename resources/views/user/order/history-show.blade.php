@@ -3,11 +3,7 @@
         <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 space-y-4 md:space-y-0">
             <h1 class="text-2xl md:text-3xl font-bold text-gray-800 flex items-center space-x-3">
                 <span>
-                    @if ($order instanceof \App\Models\CustomOrder)
-                        Custom Order #{{ $order->id }}
-                    @else
-                        Order #{{ $order->id }}
-                    @endif
+                    {{ $order->order_code ?? ($order instanceof \App\Models\CustomOrder ? 'Custom Order #' . $order->id : 'Order #' . $order->id) }}
                 </span>
                 @php
                     $statusColor = 'text-green-600 bg-green-100';
@@ -32,7 +28,7 @@
         <div class="bg-white p-6 rounded-lg shadow-md grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
                 <p class="text-xs text-gray-500 font-medium">Order ID</p>
-                <p class="text-gray-800 font-semibold mt-1">#{{ $order->id }}</p>
+                <p class="text-gray-800 font-semibold mt-1">{{ $order->order_code ?? ($order instanceof \App\Models\CustomOrder ? 'Custom Order #' . $order->id : 'Order #' . $order->id) }}</p>
             </div>
             <div>
                 <p class="text-xs text-gray-500 font-medium">Date Placed</p>

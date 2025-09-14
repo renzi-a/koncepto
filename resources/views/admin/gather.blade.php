@@ -5,7 +5,7 @@
         <!-- Header -->
         <div class="flex items-center justify-between mb-4">
             <h1 class="text-2xl font-bold text-gray-800">
-                Gathering Items for Order #C{{ $order->id }}
+                Processing Items for Order {{ $order->order_code ?? 'N/A' }}
             </h1>
             <a href="{{ route('admin.orders') }}"
                 class="text-sm text-blue-600 hover:underline">

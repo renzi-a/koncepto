@@ -96,7 +96,7 @@
                         <div class="flex flex-col h-full">
                             <div class="flex-grow">
                                 <h2 class="text-lg font-bold text-gray-800 mb-1">
-                                    Order #{{ $order->is_custom ? 'C' : '' }}{{ $order->id }}
+                                    Order #{{ $order->order_code ?? $order->id }}
                                 </h2>
                                 <p class="text-gray-600 text-xs mt-1">
                                     <span class="font-semibold text-sm">{{ $order->user->first_name ?? '-' }} {{ $order->user->last_name ?? '' }}</span>

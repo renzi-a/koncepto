@@ -3,7 +3,7 @@
 
         <div class="flex items-center justify-between mb-4">
             <h1 class="text-2xl font-bold text-gray-800">
-                Order #{{ $order->id }}
+                Order #{{ $order->id ?? 'N/A' }}
             </h1>
             <a href="{{ route('admin.orders') }}"
                class="text-sm text-blue-600 hover:underline">
@@ -15,7 +15,7 @@
             <!-- School Info -->
             <div class="flex items-start justify-between mb-6">
                 <div class="flex items-center gap-4">
-                    @if($order->user && $order->user->school && $order->user->school->image)
+                    @if(!empty($order->user->school->image))
                         <img src="{{ asset('storage/' . $order->user->school->image) }}"
                              alt="School Logo"
                              class="w-16 h-16 object-cover rounded-full border border-gray-200 shadow-sm">
@@ -39,12 +39,12 @@
                 </div>
                 <div class="text-right">
                     <p class="text-xs text-gray-500">
-                        Ordered: <span class="font-medium text-gray-700">{{ $order->created_at->format('M d, Y h:i A') }}</span>
+                        Ordered: <span class="font-medium text-gray-700">{{ $order->created_at ? $order->created_at->format('M d, Y h:i A') : 'N/A' }}</span>
                     </p>
                     <div class="mt-2">
                         @php
                             $statusClass = '';
-                            switch(strtolower($order->status)) {
+                            switch(strtolower($order->status ?? '')) {
                                 case 'pending':
                                     $statusClass = 'bg-gray-200 text-gray-800';
                                     break;
@@ -66,7 +66,7 @@
                             }
                         @endphp
                         <span class="inline-block text-xs px-2 py-0.5 rounded-full font-semibold {{ $statusClass }}">
-                            {{ ucfirst($order->status) }}
+                            {{ ucfirst($order->status ?? 'N/A') }}
                         </span>
                     </div>
                 </div>
@@ -99,33 +99,35 @@
                                 $price = $item->price ?? 0;
                                 $quantity = $item->quantity ?? 0;
                                 $total = $price * $quantity;
-                                $grandTotal += $total;
+                                $grandTotal += $price ? $total : 0;
                             @endphp
                             <tr class="border-t hover:bg-gray-50">
                                 <td class="px-4 py-2">{{ $index + 1 }}</td>
-                                <td class="px-4 py-2">{{ $item->name }}</td>
-                                <td class="px-4 py-2">{{ $item->brand ?? '-' }}</td>
-                                <td class="px-4 py-2">{{ $item->unit ?? '-' }}</td>
-                                <td class="px-4 py-2">{{ $item->quantity }}</td>
+                                <td class="px-4 py-2">{{ $item->name ?? 'N/A' }}</td>
+                                <td class="px-4 py-2">{{ $item->brand ?? 'N/A' }}</td>
+                                <td class="px-4 py-2">{{ $item->unit ?? 'N/A' }}</td>
+                                <td class="px-4 py-2">{{ $item->quantity ?? 'N/A' }}</td>
                                 <td class="px-4 py-2">
-                                    @isset($item->price)
+                                    @if(isset($item->price))
                                         ₱{{ number_format($item->price, 2) }}
                                     @else
-                                        <span class="text-gray-400">Not yet set</span>
-                                      @endisset
+                                        <span class="text-gray-400">N/A</span>
+                                    @endif
                                 </td>
                                 <td class="px-4 py-2">
-                                    @isset($item->price)
+                                    @if(isset($item->price))
                                         ₱{{ number_format($total, 2) }}
                                     @else
-                                        <span class="text-gray-400">-</span>
-                                    @endisset
+                                        <span class="text-gray-400">N/A</span>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach
                         <tr class="bg-gray-100 font-semibold border-t">
                             <td colspan="6" class="px-4 py-2 text-right">Grand Total:</td>
-                            <td class="px-4 py-2 text-green-700">₱{{ number_format($grandTotal, 2) }}</td>
+                            <td class="px-4 py-2 text-green-700">
+                                ₱{{ number_format($grandTotal, 2) }}
+                            </td>
                         </tr>
                     </tbody>
                 </table>

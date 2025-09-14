@@ -1,5 +1,5 @@
 <x-profile-link>
-    <div class="container mx-auto py-6">
+    <div class="container mx-auto px-4 py-6 space-y-6">
         <h1 class="text-2xl font-bold mb-6 text-gray-800">Track Your Orders</h1>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -1,7 +1,9 @@
 <x-layout>
     <div class="container mx-auto px-4 py-6 space-y-6">
         <div class="flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-800">Quotation for Custom Order #{{ $order->id }}</h1>
+            <h1 class="text-2xl font-bold text-gray-800">
+                Quotation for Order #{{ $order->order_code ?? $order->id }}
+            </h1>
             <a href="{{ route('admin.custom-orders.show', $order->id) }}" class="text-blue-600 hover:underline">← Back to Custom Order</a>
         </div>
 

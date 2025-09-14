@@ -39,11 +39,7 @@
                                     <div>
                                         <p>
                                             <strong class="text-gray-900">
-                                                @if ($order->type === 'custom')
-                                                    Custom Order #{{ $order->id }}
-                                                @else
-                                                    Order #{{ $order->id }}
-                                                @endif
+                                                {{ $order->order_code ?? ($order->type === 'custom' ? 'Custom Order #' . $order->id : 'Order #' . $order->id) }}
                                             </strong>
                                         </p>
                                         <p class="text-sm text-gray-600">

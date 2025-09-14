@@ -25,7 +25,7 @@
                     </a>
                 </div>
             </div>
-        </div>
+        </div> 
 
         <form method="POST" id="customOrderForm" action="{{ route('custom-orders.store') }}" enctype="multipart/form-data">
             @csrf
